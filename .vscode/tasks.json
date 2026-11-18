@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Mario Sprint : compiler",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/android.ps1",
+        "-Action",
+        "build"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mario Sprint : installer / mettre à jour uniquement",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/android.ps1",
+        "-Action",
+        "install",
+        "-Device",
+        "${input:androidDevice}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Mario Sprint : vérifier",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/android.ps1",
+        "-Action",
+        "test"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "androidDevice",
+      "type": "promptString",
+      "description": "Numéro ADB du téléphone (installation uniquement)",
+      "default": "d2627d0d"
+    }
+  ]
+}

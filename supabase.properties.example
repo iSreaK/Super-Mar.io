@@ -1,0 +1,4 @@
+# Copier dans supabase.properties à la racine, puis compléter ces identifiants publics.
+SUPABASE_URL=https://VOTRE_REFERENCE.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_VOTRE_CLE_PUBLIQUE
+GOOGLE_WEB_CLIENT_ID=VOTRE_CLIENT_WEB.apps.googleusercontent.com

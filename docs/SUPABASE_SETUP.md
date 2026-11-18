@@ -1,0 +1,110 @@
+# Configurer Supabase et Google — Mario Sprint 1.3
+
+Le jeu local fonctionne immédiatement sans compte. Le réseau devient actif une fois ces étapes terminées et l'APK recompilé. Aucun projet Supabase réel n'a encore été relié ; les tests HTTP du projet utilisent un serveur simulé sur le PC.
+
+## 1. Créer le projet Supabase
+
+Ouvrir https://supabase.com/dashboard, créer une organisation personnelle si nécessaire, puis **New project**. Choisir un nom, une région proche des joueurs (Europe) et un mot de passe de base fort. Conserver ce mot de passe dans ton gestionnaire ; il ne va jamais dans l'application. Attendre la préparation de la base.
+
+Dans **Connect** ou **Project Settings → API / API Keys**, relever :
+
+- **Project URL** : https://REFERENCE.supabase.co
+- **Publishable key** : commence par **sb_publishable_**.
+
+Ce sont les identifiants publics attendus par le client. Ne pas utiliser de clé **sb_secret_**, **service_role**, de mot de passe Postgres ou de secret OAuth dans l'APK. Les clés publiques n'accordent pas les permissions des utilisateurs ; les accès sont limités par Auth et les fonctions SQL.
+
+## 2. Créer les niveaux et protéger les records
+
+Dans **SQL Editor → New query**, coller tout le fichier **supabase/migrations/202610150001_levels_and_rankings.sql**, puis **Run**. Ce script est transactionnel et peut être rejoué sans effacer les records.
+
+Il crée les trois niveaux versionnés, la table best_runs, son index de classement, la RLS et deux fonctions :
+
+- submit_run : identité issue de la session Google, bornes validées, meilleur temps atomique par niveau/UID ; un temps égal ou moins bon ne remplace rien.
+- get_leaderboard : au maximum 50 résultats, tri par temps puis UID pour départager les égalités.
+
+Les rôles anon/authenticated ne peuvent pas lire ou modifier directement les tables. Seul authenticated peut appeler les deux fonctions, qui vérifient aussi le fournisseur Google. Le nom affiché est nettoyé et limité à 40 caractères ; aucun email, jeton ou photo n'est ajouté aux classements.
+
+Lancer ensuite **supabase/checks.sql**, qui ne fait que lire la structure. Vérifier les trois niveaux actifs, relrowsecurity=true, toutes les permissions directes à false, EXECUTE=false pour anon et true pour authenticated. Les deux fonctions doivent afficher prosecdef=true et search_path vide.
+
+## 3. Préparer Google Cloud
+
+Ouvrir https://console.cloud.google.com/ et sélectionner ou créer un projet pour Mario Sprint. Aller dans **Google Auth Platform** (ou **APIs & Services → OAuth consent screen** selon la console).
+
+Configurer **Branding** : nom Mario Sprint, email d'assistance et contact développeur. Dans **Audience**, choisir **External** pour des comptes Gmail personnels. Pour ce projet privé, rester en mode **Testing** et ajouter les adresses des comptes qui joueront dans **Test users**.
+
+Dans **Data Access**, utiliser uniquement les scopes d'identité **openid**, **userinfo.email** et **userinfo.profile**. Aucune API Drive, Contacts ou autre permission n'est nécessaire.
+
+## 4. Créer le client OAuth Web
+
+Dans Google Auth Platform → **Clients → Create client → Web application**, créer un client « Mario Sprint Supabase ».
+
+Pour **Authorized redirect URIs**, ajouter exactement la **Callback URL** affichée par Supabase dans **Authentication → Sign In / Providers → Google** : généralement **https://REFERENCE.supabase.co/auth/v1/callback**. Ne pas deviner la référence, copier l'URL de ton propre projet.
+
+Enregistrer et récupérer le **Client ID Web** (suffixe .apps.googleusercontent.com) et le **Client secret**. Le secret va uniquement dans le panneau du fournisseur Google de Supabase, à l'étape 6. Aucun secret ne doit être envoyé dans une conversation, enregistré dans le projet Android ou inclus dans Git.
+
+## 5. Créer le client OAuth Android
+
+Dans le même projet Google Cloud, créer un second client de type **Android** :
+
+- Nom : Mario Sprint Android debug.
+- Package : **fr.julie.mariosprint**.
+- SHA-1 debug de la clé actuelle du PC : **68:08:FB:15:97:78:9A:CA:1E:B1:5D:D8:70:E3:A4:FA:5B:8C:EC:F8**.
+
+Cette empreinte a été lue depuis la clé de compilation sur le PC, sans accéder au téléphone. Pour la recalculer : lancer **.\tools\android.ps1 -Action sha** à la racine MarioSprint. En cas de nouvelle clé ou de version release, créer le client Android correspondant à sa propre SHA-1. Ne pas confondre le Client ID Android et le Client ID Web attendu dans l'application.
+
+## 6. Activer Google dans Supabase
+
+Revenir dans **Authentication → Sign In / Providers → Google**. Activer Google. Dans la liste des **Client IDs**, mettre le **Client ID Web en premier**, puis le **Client ID Android**, séparés par une virgule. Copier le **Client secret Web** dans le champ secret du fournisseur. Enregistrer.
+
+Laisser **Skip nonce checks désactivé**. Le code envoie le SHA-256 du nonce à Google et le nonce brut à Supabase, conformément au flux natif. Ne pas activer les connexions anonymes ; les comptes de classement utilisent Google. Les autres fournisseurs ne sont pas utilisés par l'app.
+
+Le jeu utilise Credential Manager et l'échange d'un ID token Google : aucun navigateur, schéma de deep link Android ou redirect URI mobile supplémentaire n'est nécessaire pour ce flux. L'URI de callback précédente appartient à Supabase et au client OAuth Web.
+
+## 7. Renseigner les trois identifiants publics dans le projet
+
+Copier **supabase.properties.example** en **supabase.properties**, à la racine MarioSprint (même dossier que settings.gradle.kts), puis remplacer les trois valeurs :
+
+    SUPABASE_URL=https://REFERENCE.supabase.co
+    SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+    GOOGLE_WEB_CLIENT_ID=CLIENT_WEB.apps.googleusercontent.com
+
+Ne pas entourer les valeurs de guillemets. Ce fichier est ignoré par Git. Le build refuse les clés secrètes et les URL hors HTTPS Supabase. Sans configuration complète, les trois niveaux et les scores locaux fonctionnent ; le bouton Google explique ce qui manque.
+
+Aucun google-services.json n'est nécessaire. Firebase et son plugin ont été retirés. La chaîne Kotlin/AGP/Gradle/SDK initiale reste inchangée.
+
+## 8. Compiler et installer uniquement
+
+Depuis le dossier MarioSprint :
+
+    .\tools\android.ps1 -Action test
+    .\tools\android.ps1 -Action install -Device d2627d0d
+
+La première commande exécute uniquement les tests JVM et le lint sur le PC. La seconde compile et met à jour l'APK, sans ouvrir le jeu et sans effacer les records. Le téléphone doit être branché, déverrouillé et autoriser l'installation USB. Les scripts run et test -Connected exigent un accord humain explicite préalable et le drapeau AllowPhoneInteraction ; ils ne font pas partie de cette procédure.
+
+## 9. Faire toi-même le premier essai connecté
+
+Ouvrir Mario Sprint sur le téléphone, toucher **Continuer avec Google**, choisir un compte de test autorisé. Sélectionner un niveau et finir une course sans pause ni passage en arrière-plan. Le résultat doit annoncer sa synchronisation. Ouvrir son classement, puis comparer avec un second compte si souhaité.
+
+Dans Supabase, **Authentication → Users** doit contenir le joueur et **Table Editor → best_runs** son record pour le bon level_id. Ces consultations administrateur ne modifient pas les permissions de l'app. Chaque niveau conserve son meilleur temps séparément.
+
+Une course invitée reste locale. Une connexion en cours de partie ne réattribue pas ce temps. En cas de réseau absent, l'envoi est conservé localement pour le bon UID et niveau ; toucher **Synchroniser** après retour du réseau. Aucun service ne tourne en arrière-plan. Les temps historiques prairie-1-v1 sont conservés séparément et ne sont pas réenvoyés comme s'ils appartenaient aux nouveaux parcours.
+
+## Si la connexion échoue
+
+- Google refuse le compte : vérifier Test users / Audience et le projet Google Cloud choisi.
+- Le sélecteur échoue : vérifier le package exact, la SHA-1 de l'APK et le Client ID Web dans supabase.properties, puis recompiler.
+- Supabase refuse le jeton : vérifier que les Client IDs du fournisseur sont ceux du même projet Google, Web en premier, que le secret est enregistré et que les contrôles de nonce restent actifs.
+- RPC introuvable : exécuter le script SQL entier dans le bon projet. Il recharge le cache de schéma PostgREST.
+- Record non envoyé : il doit venir d'une course Google commencée connectée, sans pause, entre 10 secondes et 10 minutes, sur une version de niveau active. Réessayer avec Synchroniser.
+- Session expirée/révoquée : se reconnecter ; aucun record local n'est effacé.
+
+Le classement reste fondé sur un chrono calculé dans l'application. Les droits serveur empêchent l'usurpation d'UID et l'écrasement par un temps plus lent ; une compétition publique demanderait aussi une validation de parcours côté serveur contre les clients modifiés.
+
+## Références officielles
+
+- [Connexion Google native et nonces Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google)
+- [Clés publiques et secrètes Supabase](https://supabase.com/docs/guides/api/api-keys)
+- [RLS Postgres](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Sessions et renouvellement](https://supabase.com/docs/guides/auth/sessions)
+- [Contrat HTTP Supabase Auth](https://github.com/supabase/auth/blob/master/openapi.yaml)
+- [Credential Manager / Sign in with Google Android](https://developer.android.com/identity/sign-in/credential-manager-siwg)

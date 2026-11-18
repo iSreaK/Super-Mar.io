@@ -1,0 +1,37 @@
+package fr.julie.mariosprint.ui.model
+
+sealed interface AccountAction {
+    data object SignIn : AccountAction
+    class TokenReceived(val token: String, val nonce: String) : AccountAction
+    data class SignInFailed(val reason: SignInFailure) : AccountAction
+    data object SignOut : AccountAction
+    data object SessionCleared : AccountAction
+    data object ToggleSound : AccountAction
+    data object Synchronize : AccountAction
+}
+enum class SignInFailure { CANCELED, NO_ACCOUNT, UNAVAILABLE }
+sealed interface HomeAction {
+    data class SelectLevel(val level: fr.julie.mariosprint.domain.game.LevelId) : HomeAction { }
+    data object Play : HomeAction
+    data object Leaderboard : HomeAction
+    data class Account(val action: AccountAction) : HomeAction
+}
+sealed interface LeaderboardAction {
+    data object Back : LeaderboardAction
+    data object Refresh : LeaderboardAction
+    data class Account(val action: AccountAction) : LeaderboardAction
+}
+sealed interface GameAction {
+    data object Frame : GameAction
+    data object Pause : GameAction
+    data object Resume : GameAction
+    data object Restart : GameAction
+    data object Quit : GameAction
+    data object Leaderboard : GameAction
+    data object Synchronize : GameAction
+}
+sealed interface AccountEvent {
+    data object RequestGoogleSignIn : AccountEvent
+    data object ClearGoogleSession : AccountEvent
+    data class ShowMessage(val text: UiText) : AccountEvent
+}

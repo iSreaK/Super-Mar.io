@@ -1,0 +1,165 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "971691115248a84868d98406a998e95d",
+    "entities": [
+      {
+        "tableName": "personal_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `bestMs` INTEGER, `attempts` INTEGER NOT NULL, `finishes` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bestMs",
+            "columnName": "bestMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finishes",
+            "columnName": "finishes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId"
+          ]
+        }
+      },
+      {
+        "tableName": "pending_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `uid` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`, `uid`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId",
+            "uid"
+          ]
+        }
+      },
+      {
+        "tableName": "settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `sound` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sound",
+            "columnName": "sound",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "leaderboard_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `viewerUid` TEXT NOT NULL, `uid` TEXT NOT NULL, `name` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`, `viewerUid`, `uid`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId",
+            "viewerUid",
+            "uid"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '971691115248a84868d98406a998e95d')"
+    ]
+  }
+}
