@@ -62,12 +62,20 @@ internal class AccountViewModel(private val accounts: AccountRepository, private
             AccountAction.SignOut -> if (!flags.value.busy) {
                 flags.update { it.copy(busy = true) }
                 viewModelScope.launch {
-                    try { accounts.signOut(); _events.emit(AccountEvent.ClearGoogleSession) }
+                    try {
+                        accounts.signOut()
+                        flags.update { it.copy(googleSessionClearPending = true) }
+                    }
                     catch (error: CancellationException) { throw error }
-                    catch (_: Exception) { flags.update { it.copy(busy = false) }; message(R.string.sign_out_failed) }
+                    catch (_: Exception) { message(R.string.sign_out_failed) }
+                    finally {
+                        flags.update { if (it.googleSessionClearPending) it else it.copy(busy = false) }
+                    }
                 }
             }
-            AccountAction.SessionCleared -> flags.update { it.copy(busy = false) }
+            AccountAction.SessionCleared -> flags.update {
+                if (it.googleSessionClearPending) it.copy(busy = false, googleSessionClearPending = false) else it
+            }
             AccountAction.ToggleSound -> viewModelScope.launch {
                 try { records.toggleSound() }
                 catch (error: CancellationException) { throw error }

@@ -9,6 +9,7 @@ import fr.julie.mariosprint.ui.model.SignInFailure
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.security.MessageDigest
 import java.security.SecureRandom
 
@@ -32,5 +33,12 @@ internal class GoogleSignInCoordinator(context: Context, private val webClientId
         } catch (error: CancellationException) { onFailure(SignInFailure.CANCELED); throw error
         } catch (_: Exception) { onFailure(SignInFailure.UNAVAILABLE) }
     }
-    suspend fun clearSession() { manager.clearCredentialState(ClearCredentialStateRequest()) }
+    suspend fun clearSession() {
+        // Supabase est déjà déconnecté ; le nettoyage des préférences Google ne doit pas bloquer l'UI.
+        withTimeoutOrNull(GOOGLE_SESSION_CLEAR_TIMEOUT_MS) {
+            manager.clearCredentialState(ClearCredentialStateRequest())
+        }
+    }
 }
+
+private const val GOOGLE_SESSION_CLEAR_TIMEOUT_MS = 15_000L

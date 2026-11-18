@@ -161,8 +161,89 @@ class ViewModelTest {
         backgroundScope.launch(dispatcher) { vm.state.collect() }
         vm.onAction(AccountAction.SignOut)
         assertNull(accounts.account.value); assertTrue(vm.state.value.busy)
+        assertTrue(vm.state.value.googleSessionClearPending)
         vm.onAction(AccountAction.SessionCleared)
         assertFalse(vm.state.value.busy)
+        assertFalse(vm.state.value.googleSessionClearPending)
+    }
+    @Test fun signOutCleanupSurvivesAnInactiveUiWithoutAnEventSubscriber() = runTest {
+        val signedOut = CompletableDeferred<Unit>()
+        val accounts = FakeAccounts().apply {
+            value.value = PlayerAccount("alice", "Alice")
+            onSignOut = { signedOut.await() }
+        }
+        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync(), FakeProgress()))
+        val foreground = backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(AccountAction.SignOut)
+        assertTrue(vm.state.value.busy)
+        foreground.cancel()
+        advanceTimeBy(5_001)
+        runCurrent()
+
+        signedOut.complete(Unit)
+        runCurrent()
+        assertNull(accounts.account.value)
+        val resumed = backgroundScope.launch(dispatcher) { vm.state.collect() }
+        assertNull(vm.state.value.player)
+        assertTrue(vm.state.value.googleSessionClearPending)
+        assertTrue(vm.state.value.busy)
+        vm.onAction(AccountAction.SignOut)
+        assertEquals(1, accounts.signOuts)
+
+        vm.onAction(AccountAction.SessionCleared)
+        assertFalse(vm.state.value.busy)
+        assertFalse(vm.state.value.googleSessionClearPending)
+        resumed.cancel()
+        advanceTimeBy(5_001)
+        runCurrent()
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        assertFalse(vm.state.value.googleSessionClearPending)
+        assertFalse(vm.state.value.busy)
+    }
+    @Test fun failedSignOutKeepsTheAccountAndAllowsAnotherAttempt() = runTest {
+        val accounts = FakeAccounts().apply {
+            value.value = PlayerAccount("alice", "Alice")
+            onSignOut = { throw java.io.IOException() }
+        }
+        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync(), FakeProgress()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        val events = mutableListOf<AccountEvent>()
+        backgroundScope.launch(dispatcher) { vm.events.toList(events) }
+        vm.onAction(AccountAction.SignOut)
+        assertEquals("alice", vm.state.value.player?.uid)
+        assertFalse(vm.state.value.busy)
+        assertFalse(vm.state.value.googleSessionClearPending)
+        assertEquals(fr.julie.mariosprint.R.string.sign_out_failed, (events.single() as AccountEvent.ShowMessage).text.resource)
+
+        accounts.onSignOut = {}
+        vm.onAction(AccountAction.SignOut)
+        assertEquals(2, accounts.signOuts)
+        assertNull(vm.state.value.player)
+        assertTrue(vm.state.value.googleSessionClearPending)
+    }
+    @Test fun canceledSignOutDoesNotLeaveTheAccountBusyOrRequestGoogleCleanup() = runTest {
+        val accounts = FakeAccounts().apply {
+            value.value = PlayerAccount("alice", "Alice")
+            onSignOut = { throw CancellationException("Canceled sign-out") }
+        }
+        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync(), FakeProgress()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        val events = mutableListOf<AccountEvent>()
+        backgroundScope.launch(dispatcher) { vm.events.toList(events) }
+        vm.onAction(AccountAction.SignOut)
+        assertEquals("alice", vm.state.value.player?.uid)
+        assertFalse(vm.state.value.busy)
+        assertFalse(vm.state.value.googleSessionClearPending)
+        assertTrue(events.isEmpty())
+    }
+    @Test fun anUnrelatedCleanupAcknowledgementCannotUnlockASignIn() = runTest {
+        val vm = keep(AccountViewModel(FakeAccounts(), FakeRecords(), FakeSync(), FakeProgress()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(AccountAction.SignIn)
+        assertTrue(vm.state.value.busy)
+        vm.onAction(AccountAction.SessionCleared)
+        assertTrue(vm.state.value.busy)
+        assertFalse(vm.state.value.googleSessionClearPending)
     }
 
 }
@@ -191,8 +272,10 @@ internal class FakeAccounts(override val configured: Boolean = true) : AccountRe
     val value = MutableStateFlow<PlayerAccount?>(null)
     override val account = value.asStateFlow()
     var signIns = 0
+    var signOuts = 0
+    var onSignOut: suspend () -> Unit = {}
     override suspend fun signIn(idToken: String, nonce: String) { signIns++ }
-    override suspend fun signOut() { value.value = null }
+    override suspend fun signOut() { signOuts++; onSignOut(); value.value = null }
 }
 internal class FakeSync : PlayerSyncRepository { override suspend fun synchronize() = false }
 internal class FakeProgress : ProgressRepository {

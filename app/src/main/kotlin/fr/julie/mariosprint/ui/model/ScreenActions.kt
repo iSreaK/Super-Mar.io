@@ -35,7 +35,6 @@ sealed interface GameAction {
 }
 sealed interface AccountEvent {
     data object RequestGoogleSignIn : AccountEvent
-    data object ClearGoogleSession : AccountEvent
     data class ShowMessage(val text: UiText) : AccountEvent
 }
 

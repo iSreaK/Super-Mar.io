@@ -10,7 +10,8 @@ data class StatsUi(val bestMs: Long? = null, val attempts: Int = 0, val finishes
 data class RankingEntryUi(val uid: String, val name: String, val timeMs: Long)
 data class ProfileState(val player: PlayerUi? = null, val sound: Boolean = true,
     val configured: Boolean = false, val busy: Boolean = false, val syncing: Boolean = false,
-    val skin: CharacterSkin = CharacterSkin.LUIGI, val unlockedSkins: Int = 1)
+    val skin: CharacterSkin = CharacterSkin.LUIGI, val unlockedSkins: Int = 1,
+    val googleSessionClearPending: Boolean = false)
 data class HomeState(val selectedLevel: LevelId = LevelId.MEADOW, val legacyBestMs: Long? = null, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState(), val error: UiText? = null)
 data class LeaderboardState(val level: LevelId = LevelId.MEADOW, val entries: List<RankingEntryUi> = emptyList(), val loading: Boolean = false,
     val error: UiText? = null, val cached: Boolean = true, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState())

@@ -25,6 +25,8 @@ import fr.julie.mariosprint.ui.screens.*
 import fr.julie.mariosprint.ui.theme.SprintTheme
 import fr.julie.mariosprint.ui.viewmodel.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -45,19 +47,24 @@ fun SprintApp() {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { fr.julie.mariosprint.game.rendering.GameArt.heroFrames.size }
         artReady = true
     }
-    LaunchedEffect(accountVm, lifecycleOwner) {
+    LaunchedEffect(accountVm, lifecycleOwner, google) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            launch {
+                accountVm.state.map { it.googleSessionClearPending }.distinctUntilChanged().collect { pending ->
+                    if (pending) {
+                        try { google.clearSession() }
+                        catch (error: CancellationException) { throw error }
+                        catch (_: Exception) { /* La session Supabase est déjà supprimée localement. */ }
+                        // Une annulation lifecycle laisse la demande en attente pour le retour au premier plan.
+                        accountVm.onAction(AccountAction.SessionCleared)
+                    }
+                }
+            }
             accountVm.events.collect { event ->
                 when (event) {
                     AccountEvent.RequestGoogleSignIn -> launch {
                         google.signIn(activity, { token, nonce -> accountVm.onAction(AccountAction.TokenReceived(token, nonce)) },
                             { accountVm.onAction(AccountAction.SignInFailed(it)) })
-                    }
-                    AccountEvent.ClearGoogleSession -> launch {
-                        try { google.clearSession() }
-                        catch (error: CancellationException) { throw error }
-                        catch (_: Exception) { /* La session Supabase est déjà supprimée localement. */ }
-                        finally { accountVm.onAction(AccountAction.SessionCleared) }
                     }
                     is AccountEvent.ShowMessage -> scope.launch {
                         snackbar.showSnackbar(app.getString(event.text.resource, *event.text.args.toTypedArray()))
