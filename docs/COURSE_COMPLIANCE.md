@@ -48,3 +48,13 @@ La suppression d'une session invalide efface le stockage chiffré avant de notif
 ### Historique distinct
 
 La version 1.2 avait obtenu 38 tests JVM et 17 tests instrumentés sur Redmi, avec les autorisations alors en vigueur. Ces résultats historiques ne sont pas présentés comme une validation sur téléphone de la version 1.3. Les vérifications Firebase antérieures deviennent obsolètes depuis le changement de fournisseur.
+
+## Configuration Supabase — 18 novembre 2026
+
+Les trois identifiants publics sont renseignés dans supabase.properties, toujours exclu de Git. Le BuildConfig généré a été vérifié : Supabase activé et ID client Web identique à la valeur fournie par Julie, tiret inclus. Aucun secret OAuth n'est ajouté au projet. Le guide de configuration précise désormais l'exception Google pour les seuls scopes d'identité : l'ajout dans Test users n'est pas obligatoire pour ce flux.
+
+Vérifications en lecture seule depuis le PC sur le projet distant : Auth settings répond HTTP 200 avec Google activé ; l'appel anonyme de get_leaderboard répond HTTP 401, code Postgres 42501, permission refusée pour cette fonction. Ces contrôles ne valident ni une connexion Google réelle, ni l'ensemble des droits ou des écritures authentifiées. Aucun compte ni record n'a été créé ou modifié.
+
+Compilation de l'APK debug, **60 tests JVM réussis sans échec ni test ignoré** et **lint debug sans erreur** (build : 6 min 26 s). Les avertissements des versions conservées, du portrait et des suggestions KTX restent présents. Aucun changement de code métier, de schéma Room, de migration SQL ou de dépendance ; les tests SQL et les tests instrumentés n'ont pas été exécutés pour cette configuration.
+
+La seule commande tentée sur le téléphone est l'installation de mise à jour, avec son numéro connu et l'option install -r. Elle échoue car ADB ne trouve pas l'appareil ; l'APK configuré reste disponible sur le PC. Aucune ouverture, capture, lecture de données, commande de diagnostic ou exécution de test sur le téléphone. L'essai connecté sera effectué manuellement par Julie après installation.

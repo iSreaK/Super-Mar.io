@@ -1,6 +1,6 @@
 # Configurer Supabase et Google — Mario Sprint 1.3
 
-Le jeu local fonctionne immédiatement sans compte. Le réseau devient actif une fois ces étapes terminées et l'APK recompilé. Aucun projet Supabase réel n'a encore été relié ; les tests HTTP du projet utilisent un serveur simulé sur le PC.
+Le jeu local fonctionne immédiatement sans compte. Le réseau devient actif une fois ces étapes terminées et l'APK recompilé. Les tests HTTP automatisés utilisent un serveur simulé sur le PC ; la connexion Google et les classements du projet distant doivent aussi être vérifiés manuellement par Julie après configuration.
 
 ## 1. Créer le projet Supabase
 
@@ -30,7 +30,7 @@ Lancer ensuite **supabase/checks.sql**, qui ne fait que lire la structure. Véri
 
 Ouvrir https://console.cloud.google.com/ et sélectionner ou créer un projet pour Mario Sprint. Aller dans **Google Auth Platform** (ou **APIs & Services → OAuth consent screen** selon la console).
 
-Configurer **Branding** : nom Mario Sprint, email d'assistance et contact développeur. Dans **Audience**, choisir **External** pour des comptes Gmail personnels. Pour ce projet privé, rester en mode **Testing** et ajouter les adresses des comptes qui joueront dans **Test users**.
+Configurer **Branding** : nom Mario Sprint, email d'assistance et contact développeur. Dans **Audience**, choisir **External** pour des comptes Gmail personnels. Pour ce projet privé, le mode **Testing** suffit. Avec uniquement les scopes d'identité ci-dessous, Google n'exige pas l'ajout des joueurs dans **Test users** : l'exception Sign in with Google s'applique. D'autres scopes pourraient changer cette règle.
 
 Dans **Data Access**, utiliser uniquement les scopes d'identité **openid**, **userinfo.email** et **userinfo.profile**. Aucune API Drive, Contacts ou autre permission n'est nécessaire.
 
@@ -68,7 +68,7 @@ Copier **supabase.properties.example** en **supabase.properties**, à la racine 
     SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
     GOOGLE_WEB_CLIENT_ID=CLIENT_WEB.apps.googleusercontent.com
 
-Ne pas entourer les valeurs de guillemets. Ce fichier est ignoré par Git. Le build refuse les clés secrètes et les URL hors HTTPS Supabase. Sans configuration complète, les trois niveaux et les scores locaux fonctionnent ; le bouton Google explique ce qui manque.
+Copier l'ID client Web en entier, y compris le tiret après le numéro de projet et le suffixe .apps.googleusercontent.com. Ne pas entourer les valeurs de guillemets. Ce fichier est ignoré par Git. Le build refuse les clés secrètes et les URL hors HTTPS Supabase. Sans configuration complète, les trois niveaux et les scores locaux fonctionnent ; le bouton Google explique ce qui manque.
 
 Aucun google-services.json n'est nécessaire. Firebase et son plugin ont été retirés. La chaîne Kotlin/AGP/Gradle/SDK initiale reste inchangée.
 
@@ -83,7 +83,7 @@ La première commande exécute uniquement les tests JVM et le lint sur le PC. La
 
 ## 9. Faire toi-même le premier essai connecté
 
-Ouvrir Mario Sprint sur le téléphone, toucher **Continuer avec Google**, choisir un compte de test autorisé. Sélectionner un niveau et finir une course sans pause ni passage en arrière-plan. Le résultat doit annoncer sa synchronisation. Ouvrir son classement, puis comparer avec un second compte si souhaité.
+Ouvrir Mario Sprint sur le téléphone, toucher **Continuer avec Google**, choisir son compte Google. Sélectionner un niveau et finir une course sans pause ni passage en arrière-plan. Le résultat doit annoncer sa synchronisation. Ouvrir son classement, puis comparer avec un second compte si souhaité.
 
 Dans Supabase, **Authentication → Users** doit contenir le joueur et **Table Editor → best_runs** son record pour le bon level_id. Ces consultations administrateur ne modifient pas les permissions de l'app. Chaque niveau conserve son meilleur temps séparément.
 
@@ -91,7 +91,7 @@ Une course invitée reste locale. Une connexion en cours de partie ne réattribu
 
 ## Si la connexion échoue
 
-- Google refuse le compte : vérifier Test users / Audience et le projet Google Cloud choisi.
+- Google refuse le compte : vérifier Audience, le projet Google Cloud choisi et les restrictions éventuelles du compte Google (organisation ou protection avancée). Avec les seuls scopes d'identité du jeu, l'absence dans Test users ne bloque pas la connexion.
 - Le sélecteur échoue : vérifier le package exact, la SHA-1 de l'APK et le Client ID Web dans supabase.properties, puis recompiler.
 - Supabase refuse le jeton : vérifier que les Client IDs du fournisseur sont ceux du même projet Google, Web en premier, que le secret est enregistré et que les contrôles de nonce restent actifs.
 - RPC introuvable : exécuter le script SQL entier dans le bon projet. Il recharge le cache de schéma PostgREST.
@@ -102,8 +102,9 @@ Le classement reste fondé sur un chrono calculé dans l'application. Les droits
 
 ## Références officielles
 
-- [Connexion Google native et nonces Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google)
-- [Clés publiques et secrètes Supabase](https://supabase.com/docs/guides/api/api-keys)
+- [Connexion Google native et nonces Supabase](https://supabase.com/docs/guides/auth/social-sign-in/auth-google)
+- [Audience Google et exception des scopes d'identité](https://support.google.com/cloud/answer/15549945?hl=en)
+- [Clés publiques et secrètes Supabase](https://supabase.com/docs/guides/getting-started/api-keys)
 - [RLS Postgres](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Sessions et renouvellement](https://supabase.com/docs/guides/auth/sessions)
 - [Contrat HTTP Supabase Auth](https://github.com/supabase/auth/blob/master/openapi.yaml)
