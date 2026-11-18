@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 internal class GameViewModel(private val records: RecordsRepository, private val accounts: AccountRepository,
-    private val sync: RecordSyncRepository, private val level: LevelId = LevelId.MEADOW) : ViewModel() {
+    private val sync: PlayerSyncRepository, private val level: LevelId = LevelId.MEADOW) : ViewModel() {
     private val _state = MutableStateFlow(GameState(level = level))
     val state = _state.asStateFlow()
     var engine = GameEngine(level); private set
@@ -56,10 +56,13 @@ internal class GameViewModel(private val records: RecordsRepository, private val
         _state.update { it.copy(personalBest = result?.eligible == true && result.timeMs < (it.stats.bestMs ?: Long.MAX_VALUE)) }
         val coins = engine.coins
         val uid = runUid?.takeIf { it == accounts.account.value?.uid }
+        val awardMissions = runUid == accounts.account.value?.uid
         val session = _state.value.sessionId
         viewModelScope.launch {
             try {
-                withContext(NonCancellable) { records.finishAttempt(coins, result, uid, level.value) }
+                withContext(NonCancellable) {
+                    records.finishAttempt(coins, result, uid, level.value, awardMissions = awardMissions)
+                }
                 if (session != _state.value.sessionId) return@launch
                 _state.update { it.copy(recordStatus = when {
                     result == null -> RecordStatus.NONE

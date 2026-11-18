@@ -10,19 +10,29 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class AccountViewModel(private val accounts: AccountRepository, private val records: RecordsRepository,
-    private val sync: RecordSyncRepository) : ViewModel() {
+    private val sync: PlayerSyncRepository, private val progress: ProgressRepository) : ViewModel() {
     private val flags = MutableStateFlow(ProfileState(configured = accounts.configured))
-    val state = combine(accounts.account, records.observeSound().catch { message(R.string.local_save_failed); emit(false) }, flags) { user, sound, status ->
-        status.copy(player = user?.toUi(), sound = sound)
+    private val progressState = accounts.account.flatMapLatest { account ->
+        progress.observe(account?.uid).map { account?.uid to it }
+            .onStart { emit(account?.uid to fr.julie.mariosprint.domain.model.PlayerProgress()) }
+            .catch { message(R.string.local_save_failed); emit(account?.uid to fr.julie.mariosprint.domain.model.PlayerProgress()) }
+    }
+    val state = combine(accounts.account, records.observeSound().catch { message(R.string.local_save_failed); emit(false) }, flags,
+        progressState) { user, sound, status, ownedCollection ->
+        val collection = ownedCollection.second.takeIf { ownedCollection.first == user?.uid }
+            ?: fr.julie.mariosprint.domain.model.PlayerProgress()
+        status.copy(player = user?.toUi(), sound = sound, skin = collection.equippedSkin, unlockedSkins = collection.unlockedSkins.size)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileState(configured = accounts.configured, sound = false))
     private val _events = MutableSharedFlow<AccountEvent>(extraBufferCapacity = 4)
     val events = _events.asSharedFlow()
     init {
         flags.update { it.copy(busy = true) }
         viewModelScope.launch {
-            try { accounts.initialize() }
+            try { accounts.initialize(); if (accounts.account.value != null) synchronize() }
             catch (error: CancellationException) { throw error }
             catch (_: Exception) { message(R.string.sign_in_failed) }
             finally { flags.update { it.copy(busy = false) } }

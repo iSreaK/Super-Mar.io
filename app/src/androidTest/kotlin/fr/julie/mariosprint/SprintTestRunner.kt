@@ -37,7 +37,12 @@ class QaSprintApplication : SprintApplication() {
                 override suspend fun refresh(uid: String, levelId: String) = Unit
                 override suspend fun submit(account: PlayerAccount, result: RunResult) = Unit
             }
-            override val sync = DefaultRecordSyncRepository(records, accounts, ranking)
+            override val progress = object : ProgressRepository {
+                override fun observe(uid: String?) = flowOf(PlayerProgress())
+                override suspend fun equip(uid: String?, skin: CharacterSkin) = Unit
+                override suspend fun synchronize(account: PlayerAccount) = Unit
+            }
+            override val sync = DefaultPlayerSyncRepository(records, accounts, ranking, progress)
             override val webClientId = ""
         }
     }

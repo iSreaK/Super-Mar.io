@@ -1,6 +1,6 @@
 # Mario Sprint
 
-Application Android Kotlin en portrait : **trois parcours originaux**, graphismes 2D illustrés, commandes à deux pouces, bonus, chronomètre et classements **Supabase** par niveau. Version 1.3.0 (code 4). Ouvrir ce répertoire dans Android Studio ou VS Code.
+Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre et classements **Supabase** par niveau. Version 1.4.0 (code 5). Ouvrir ce répertoire dans Android Studio ou VS Code.
 
 ## Dépôt Git
 
@@ -10,15 +10,35 @@ Le wrapper Gradle, les sources, les ressources, les tests, les schémas Room et 
 
 ## Jouer
 
-Choisir Prairie des départs, Canyon des passerelles ou Nuit des étoiles. Chaque monde possède son propre décor, ses obstacles et ses records. Stick à gauche : inclinaison partielle pour marcher, complète pour courir. Grand bouton à droite : saut ; maintenir pour sauter plus haut. Les deux doigts sont indépendants. Clavier : Q/D ou flèches, Maj/X pour courir, Espace/Z pour sauter.
+Choisir un univers (Prairie, Canyon ou Nuit), puis une difficulté (Facile, Normal ou Expert). Chaque combinaison possède son parcours fixe, son décor et ses records. Les trois parcours de la version 1.3 gardent leur géométrie et leur identifiant. Stick à gauche : inclinaison partielle pour marcher, complète pour courir. Grand bouton à droite : saut ; maintenir pour sauter plus haut. Les deux doigts sont indépendants. Clavier : Q/D ou flèches, Maj/X pour courir, Espace/Z pour sauter.
+
+| Univers | Facile | Normal | Expert |
+|---|---|---|---|
+| Prairie | Prairie des départs | Sentiers de la prairie | Sommets verdoyants |
+| Canyon | Oasis du canyon | Canyon des passerelles | Crêtes du canyon |
+| Nuit | Chemin des lanternes | Course de l'observatoire | Nuit des étoiles |
 
 Les blocs ? donnent une pièce ou un champignon. Le champignon fait grandir et permet de casser les briques. Trois bonus supplémentaires sont disponibles dans chaque niveau : **étoile** (8 s contre les ennemis), **bouclier** (un choc absorbé), **aimant** (pièces proches pendant 10 s). Une chute reste mortelle. Les effets actifs sont affichés sous le chrono ; ils ne retirent jamais de temps au chronomètre.
 
 Le chrono démarre au premier mouvement et suit le temps réel. Une pause, une perte de focus ou un délai entre images supérieur à 500 ms passe la tentative en entraînement. Recommencer repart sur un parcours neuf et classable. Durée maximale : 10 minutes. Les essais, victoires, pièces et meilleurs temps sont sauvegardés par niveau.
 
+## Missions et personnages
+
+Luigi remplace le personnage initial et reste disponible immédiatement. **Missions & personnages**, sur l'accueil, montre la progression et permet d'équiper les récompenses :
+
+- **Toad** : terminer un premier niveau sans pause.
+- **Yoshi** : terminer au moins un niveau dans chacun des trois univers.
+- **Peach** : terminer les trois parcours Expert.
+
+Chaque niveau ne compte qu'une fois ; une course interrompue ou inférieure à 10 secondes ne valide pas de mission. Les personnages ont des dessins et animations distincts, mais exactement les mêmes déplacements et collisions. Le vestiaire, l'aperçu et la partie affichent le personnage équipé.
+
+Room conserve la progression par UID et un profil invité séparé. Une course invitée n'est jamais transférée à un compte ; changer de compte pendant une course n'attribue pas de récompense. Hors connexion, les déblocages et le choix du personnage sont conservés localement. Après reconnexion, **Synchroniser** envoie d'abord les records en attente, récupère les missions déduites par Supabase des records du compte, puis sauvegarde le personnage si nécessaire. Une révision locale préserve un choix fait pendant une réponse réseau. Les records déjà en ligne permettent aussi de retrouver les missions sur un autre téléphone.
+
 ## Supabase et Google
 
 Suivre le [guide complet pas à pas](docs/SUPABASE_SETUP.md). Le script SQL prêt à exécuter est dans [supabase/migrations](supabase/migrations/202610150001_levels_and_rankings.sql), avec des [contrôles de permissions en lecture seule](supabase/checks.sql).
+
+**Projet Supabase déjà configuré en 1.3 :** exécuter uniquement la [nouvelle migration des niveaux, missions et personnages](supabase/migrations/202611180001_courses_missions_and_skins.sql), puis checks.sql. Elle ajoute six niveaux, les catégories, une table d'apparence et deux RPC protégées. Elle conserve les records. Pour une première installation, appliquer les deux migrations dans l'ordre chronologique. Sans cette extension, les nouveaux parcours et le vestiaire fonctionnent localement mais leur synchronisation en ligne échoue.
 
 Sans configuration, tout le jeu local fonctionne. Pour activer Google et le réseau, copier supabase.properties.example vers supabase.properties puis renseigner l'URL du projet, sa clé publique sb_publishable_ et le Client ID OAuth **Web**. Ne jamais inclure de clé secrète/service_role, mot de passe Postgres ou secret OAuth dans Android. Aucun google-services.json ni service Firebase n'est utilisé.
 
@@ -62,8 +82,8 @@ UpperCamelCase pour classes/composables, lowerCamelCase pour fonctions/propriét
 
 ## Conservation des données
 
-Le schéma Room reste en version 1 : il possédait déjà les clés par niveau et UID. Aucun effacement ni migration destructive. L'import historique prairie-v1 est atomique et idempotent. Les anciens scores prairie-1-v1 et leurs envois restent conservés, sans être transférés aux nouveaux parcours. L'ancien meilleur temps est affiché séparément sur l'accueil. La prairie avec bonus porte désormais prairie-1-v2 ; le canyon canyon-2-v1 et la nuit night-3-v1. Toute modification des conditions de course impose un nouvel identifiant/version et une entrée SQL correspondante.
+Le schéma Room passe de 1 à 2 par migration additive : seules les tables completed_levels et player_appearance sont créées. Les quatre tables existantes restent intactes. Aucun effacement ni migration destructive. L'import historique prairie-v1 reste atomique et idempotent. Les anciens scores prairie-1-v1 et leurs envois restent conservés, sans être transférés aux nouveaux parcours. L'ancien meilleur temps est affiché séparément sur l'accueil. Les trois identifiants prairie-1-v2, canyon-2-v1 et night-3-v1 sont conservés ; les six ajouts portent leurs propres identifiants dans LevelId. Toute modification des conditions de course impose un nouvel identifiant/version et une entrée SQL correspondante.
 
 ## Validation
 
-Les tests JVM couvrent physique, commandes, bonus, parcours complets, chronométrage, comptes, concurrence de synchronisation, frontières d'architecture et contrats HTTP Supabase sur serveur simulé. Les sources des tests Android sont maintenues et compilées, sans être exécutées sur le téléphone pour cette modification. Aucune inspection visuelle ou mesure de performances sur appareil n'a été effectuée. Validation finale sur PC : **60 tests JVM et 18 tests SQL réussis, les deux APK compilés, lint sans erreur**. Les résultats et limites sont consignés dans docs/COURSE_COMPLIANCE.md. La connexion Google réelle et les permissions du projet distant devront être vérifiées après configuration par Julie.
+Les tests JVM couvrent physique, commandes, bonus, parcours complets, chronométrage, missions, comptes, concurrence de synchronisation, frontières d'architecture et contrats HTTP Supabase sur serveur simulé. Les sources des tests Android sont maintenues et compilées, sans être exécutées sur le téléphone pour cette modification. La migration Room est aussi vérifiée sur SQLite PC avec les deux schémas exportés : `python tools/test_local_migration.py`. Les tests Postgres isolés couvrent les deux migrations, les records, l'accès aux personnages et les permissions. Aucune inspection visuelle ou mesure de performances sur appareil n'est effectuée. Les résultats et limites sont consignés dans docs/COURSE_COMPLIANCE.md. La connexion Google réelle et les écritures du projet distant devront être vérifiées par Julie.

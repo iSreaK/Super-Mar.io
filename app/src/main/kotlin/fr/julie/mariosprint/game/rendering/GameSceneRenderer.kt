@@ -13,6 +13,7 @@ import fr.julie.mariosprint.domain.game.Level
 import fr.julie.mariosprint.domain.game.Phase
 import fr.julie.mariosprint.domain.game.Tile
 import fr.julie.mariosprint.domain.game.LevelTheme
+import fr.julie.mariosprint.domain.model.CharacterSkin
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -28,6 +29,15 @@ class GameSceneRenderer {
     private var skyHeight = 0f
     private var sky: Shader? = null
     private var theme = LevelTheme.MEADOW
+    private var skin = CharacterSkin.LUIGI
+    private var heroFrames = GameArt.characters.getValue(skin)
+
+    fun setSkin(value: CharacterSkin): Boolean {
+        if (skin == value) return false
+        skin = value
+        heroFrames = GameArt.characters.getValue(value)
+        return true
+    }
 
     fun draw(canvas: Canvas, width: Float, height: Float, game: GameEngine, preview: Boolean = false) {
         if (width <= 0 || height <= 0) return
@@ -104,7 +114,7 @@ class GameSceneRenderer {
             if (player.grounded || game.phase == Phase.READY) shadow(canvas, player.x + 6, player.y + player.height, 8f)
             canvas.save()
             if (player.facing < 0) { canvas.translate(player.x * 2 + player.width, 0f); canvas.scale(-1f, 1f) }
-            drawBitmap(canvas, GameArt.heroFrames[frame], player.x - 3, player.y - 6, 18f, player.height + 6f)
+            drawBitmap(canvas, heroFrames[frame], player.x - 3, player.y - 6, 18f, player.height + 6f)
             canvas.restore()
         }
         paint.color = 0xffffefaa.toInt()

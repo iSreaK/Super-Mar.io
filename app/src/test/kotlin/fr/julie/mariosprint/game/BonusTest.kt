@@ -14,8 +14,8 @@ class BonusTest {
     }
     @Test fun allCoursesAreDistinctAndHaveAllThreeBonuses() {
         val levels = LevelId.entries.map(Level::create)
-        assertEquals(3, levels.map { it.tiles.contentHashCode() }.toSet().size)
-        assertEquals(3, levels.map { it.id.value }.toSet().size)
+        assertEquals(LevelId.entries.size, levels.map { it.tiles.contentHashCode() }.toSet().size)
+        assertEquals(LevelId.entries.size, levels.map { it.id.value }.toSet().size)
         levels.forEach { level ->
             assertEquals(BonusType.entries.toSet(), level.bonuses.map { it.type }.toSet())
             level.bonuses.forEach { assertFalse(level.solidAt(it.x + 7, it.y + 7)) }

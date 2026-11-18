@@ -2,12 +2,15 @@ package fr.julie.mariosprint.ui.model
 
 import fr.julie.mariosprint.domain.game.Phase
 import fr.julie.mariosprint.domain.game.LevelId
+import fr.julie.mariosprint.domain.model.CharacterSkin
+import fr.julie.mariosprint.domain.model.MissionId
 
 data class PlayerUi(val uid: String, val name: String)
 data class StatsUi(val bestMs: Long? = null, val attempts: Int = 0, val finishes: Int = 0, val coins: Int = 0)
 data class RankingEntryUi(val uid: String, val name: String, val timeMs: Long)
 data class ProfileState(val player: PlayerUi? = null, val sound: Boolean = true,
-    val configured: Boolean = false, val busy: Boolean = false, val syncing: Boolean = false)
+    val configured: Boolean = false, val busy: Boolean = false, val syncing: Boolean = false,
+    val skin: CharacterSkin = CharacterSkin.LUIGI, val unlockedSkins: Int = 1)
 data class HomeState(val selectedLevel: LevelId = LevelId.MEADOW, val legacyBestMs: Long? = null, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState(), val error: UiText? = null)
 data class LeaderboardState(val level: LevelId = LevelId.MEADOW, val entries: List<RankingEntryUi> = emptyList(), val loading: Boolean = false,
     val error: UiText? = null, val cached: Boolean = true, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState())
@@ -16,3 +19,14 @@ data class GameState(val level: LevelId = LevelId.MEADOW, val starSeconds: Int =
     val shield: Boolean = false, val personalBest: Boolean = false, val phase: Phase = Phase.READY, val timeMs: Long = 0, val coins: Int = 0,
     val progress: Float = 0f, val eligible: Boolean = true, val sessionId: Int = 0, val loading: Boolean = true,
     val stats: StatsUi = StatsUi(), val recordStatus: RecordStatus = RecordStatus.NONE, val profile: ProfileState = ProfileState())
+
+data class MissionUi(val id: MissionId, val progress: Int, val target: Int, val reward: CharacterSkin)
+data class CollectionState(
+    val equippedSkin: CharacterSkin = CharacterSkin.LUIGI,
+    val unlockedSkins: Set<CharacterSkin> = setOf(CharacterSkin.LUIGI),
+    val missions: List<MissionUi> = emptyList(),
+    val signedIn: Boolean = false,
+    val busy: Boolean = false,
+    val pendingSelection: Boolean = false,
+    val error: UiText? = null,
+)

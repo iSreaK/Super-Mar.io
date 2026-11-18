@@ -20,6 +20,38 @@ class ViewModelTest {
     @After fun cleanup() { store.clear(); Dispatchers.resetMain() }
     private fun <T : androidx.lifecycle.ViewModel> keep(vm: T): T = vm.also { store.put("vm", it) }
 
+    @Test fun collectionSwitchesToTheNewAccountsOwnMissionsAndSkin() = runTest {
+        val accounts = FakeAccounts().apply { value.value = PlayerAccount("alice", "Alice") }
+        val progress = FakeProgress()
+        progress.values["alice"] = MutableStateFlow(PlayerProgress(setOf(LevelId.MEADOW), CharacterSkin.TOAD))
+        val vm = keep(CollectionViewModel(accounts, progress, FakeSync()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        assertEquals(CharacterSkin.TOAD, vm.state.value.equippedSkin)
+        accounts.value.value = PlayerAccount("bob", "Bob")
+        assertEquals(setOf(CharacterSkin.LUIGI), vm.state.value.unlockedSkins)
+        assertEquals(CharacterSkin.LUIGI, vm.state.value.equippedSkin)
+        accounts.value.value = null
+        assertFalse(vm.state.value.signedIn)
+        assertEquals(0, vm.state.value.missions.first().progress)
+    }
+    @Test fun guestCanEquipAnEarnedSkinWithoutSendingItToAnAccount() = runTest {
+        val progress = FakeProgress()
+        progress.values[null] = MutableStateFlow(PlayerProgress(setOf(LevelId.MEADOW)))
+        val vm = keep(CollectionViewModel(FakeAccounts(), progress, FakeSync()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(CollectionAction.Equip(CharacterSkin.TOAD))
+        assertEquals(CharacterSkin.TOAD, vm.state.value.equippedSkin)
+        assertEquals(0, progress.syncs)
+    }
+    @Test fun collectionRejectsALockedSkinAndKeepsTheCurrentSelection() = runTest {
+        val vm = keep(CollectionViewModel(FakeAccounts(), FakeProgress(), FakeSync()))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(CollectionAction.Equip(CharacterSkin.PEACH))
+        assertEquals(CharacterSkin.LUIGI, vm.state.value.equippedSkin)
+        assertNotNull(vm.state.value.error)
+        assertFalse(vm.state.value.busy)
+    }
+
     @Test fun selectedLevelUsesItsOwnStatsAndKeepsLegacyBestSeparate() = runTest {
         val records = FakeRecords()
         records.levelStats[LevelId.CANYON.value] = MutableStateFlow(PersonalStats(bestMs = 46000))
@@ -61,14 +93,14 @@ class ViewModelTest {
     }
     @Test fun unconfiguredGoogleEmitsAnEventAndDoesNotStartAuthentication() = runTest {
         val accounts = FakeAccounts(configured = false)
-        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync()))
+        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync(), FakeProgress()))
         val events = mutableListOf<AccountEvent>()
         backgroundScope.launch(dispatcher) { vm.events.toList(events) }
         vm.onAction(AccountAction.SignIn)
         assertTrue(events.single() is AccountEvent.ShowMessage); assertEquals(0, accounts.signIns)
     }
     @Test fun accountEventsAreNotReplayedToANewSubscriber() = runTest {
-        val vm = keep(AccountViewModel(FakeAccounts(), FakeRecords(), FakeSync()))
+        val vm = keep(AccountViewModel(FakeAccounts(), FakeRecords(), FakeSync(), FakeProgress()))
         val first = mutableListOf<AccountEvent>()
         val job = backgroundScope.launch(dispatcher) { vm.events.toList(first) }
         vm.onAction(AccountAction.SignIn)
@@ -110,6 +142,7 @@ class ViewModelTest {
         assertEquals(Phase.FINISHED, vm.state.value.phase)
         assertEquals(1, records.finishes); assertNull(records.lastUid)
         assertEquals(RecordStatus.LOCAL, vm.state.value.recordStatus)
+        assertFalse(records.awardedMissions)
     }
     @Test fun accountSwitchDuringARunCannotGiveTheTimeToAnotherPlayer() = runTest {
         val records = FakeRecords(); val accounts = FakeAccounts()
@@ -120,10 +153,11 @@ class ViewModelTest {
         vm.engine.advance(.02, GameInput().apply { right = true })
         vm.onAction(GameAction.Frame)
         assertEquals(1, records.finishes); assertNull(records.lastUid)
+        assertFalse(records.awardedMissions)
     }
     @Test fun signOutRemainsBusyUntilTheGoogleSelectorIsCleared() = runTest {
         val accounts = FakeAccounts(); accounts.value.value = PlayerAccount("alice", "Alice")
-        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync()))
+        val vm = keep(AccountViewModel(accounts, FakeRecords(), FakeSync(), FakeProgress()))
         backgroundScope.launch(dispatcher) { vm.state.collect() }
         vm.onAction(AccountAction.SignOut)
         assertNull(accounts.account.value); assertTrue(vm.state.value.busy)
@@ -142,11 +176,14 @@ internal class FakeRecords : RecordsRepository {
     var attempts = 0
     var finishes = 0
     var lastUid: String? = null
+    var awardedMissions = false
     override fun observeStats(levelId: String) = levelStats[levelId] ?: stats
     override fun observeSound() = sound
     override suspend fun toggleSound() { sound.value = !sound.value }
     override suspend fun startAttempt(levelId: String) { attempts++; lastLevel = levelId }
-    override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String) { finishes++; lastUid = uid; lastLevel = levelId }
+    override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String, awardMissions: Boolean) {
+        finishes++; lastUid = uid; lastLevel = levelId; awardedMissions = awardMissions
+    }
     override suspend fun pending(uid: String) = pending[uid]
     override suspend fun acknowledge(uid: String, sent: RunResult) { if (pending[uid] == sent) pending.remove(uid) }
 }
@@ -157,7 +194,18 @@ internal class FakeAccounts(override val configured: Boolean = true) : AccountRe
     override suspend fun signIn(idToken: String, nonce: String) { signIns++ }
     override suspend fun signOut() { value.value = null }
 }
-internal class FakeSync : RecordSyncRepository { override suspend fun synchronize() = false }
+internal class FakeSync : PlayerSyncRepository { override suspend fun synchronize() = false }
+internal class FakeProgress : ProgressRepository {
+    val values = mutableMapOf<String?, MutableStateFlow<PlayerProgress>>()
+    var syncs = 0
+    override fun observe(uid: String?) = values.getOrPut(uid) { MutableStateFlow(PlayerProgress()) }
+    override suspend fun equip(uid: String?, skin: CharacterSkin) {
+        val value = observe(uid)
+        require(skin in value.value.unlockedSkins)
+        value.value = value.value.copy(equippedSkin = skin)
+    }
+    override suspend fun synchronize(account: PlayerAccount) { syncs++ }
+}
 internal class FakeRanking : RankingRepository {
     val rows = mutableMapOf<String, MutableStateFlow<List<LeaderboardEntry>>>()
     var fail = false

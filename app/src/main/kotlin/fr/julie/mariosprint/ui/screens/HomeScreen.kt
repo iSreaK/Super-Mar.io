@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import fr.julie.mariosprint.domain.game.GameEngine
 import fr.julie.mariosprint.domain.game.LevelId
+import fr.julie.mariosprint.domain.game.LevelTheme
+import fr.julie.mariosprint.domain.game.Difficulty
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -51,13 +53,25 @@ internal fun HomeScreen(state: HomeState, onAction: (HomeAction) -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 21.sp)
         }
         LevelSelector(state.selectedLevel) { onAction(HomeAction.SelectLevel(it)) }
-        LevelPreviewCard(state.selectedLevel)
+        LevelPreviewCard(state.selectedLevel, state.profile.skin)
         Button(onClick = { onAction(HomeAction.Play) }, modifier = Modifier.fillMaxWidth().height(56.dp).testTag("play"),
             shape = RoundedCornerShape(17.dp)) {
             Text(stringResource(R.string.start_selected_level, state.selectedLevel.ordinal + 1), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(Modifier.weight(1f)); Icon(painterResource(R.drawable.ic_arrow_forward), null, Modifier.size(22.dp))
         }
         PersonalRecordCard(state.stats, state.selectedLevel)
+        Surface(onClick = { onAction(HomeAction.Collection) }, shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth().testTag("open-collection")) {
+            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                CharacterPortrait(state.profile.skin, Modifier.size(44.dp, 56.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(stringResource(R.string.collection_title), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.collection_teaser, state.profile.unlockedSkins), fontSize = 12.sp)
+                }
+                Icon(painterResource(R.drawable.ic_arrow_forward), null, Modifier.size(22.dp))
+            }
+        }
         state.legacyBestMs?.let {
             Text(stringResource(R.string.legacy_best, formatRaceTime(it)), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, lineHeight = 16.sp)
         }
@@ -80,10 +94,13 @@ internal fun HomeScreen(state: HomeState, onAction: (HomeAction) -> Unit) {
 }
 
 @Composable
-private fun LevelPreviewCard(level: LevelId) {
+private fun LevelPreviewCard(level: LevelId, skin: fr.julie.mariosprint.domain.model.CharacterSkin) {
     val previewEngine = remember(level) { GameEngine(level).apply { player.x = 230f } }
     Box(Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(24.dp))) {
-        if (!androidx.compose.ui.platform.LocalInspectionMode.current) key(level) { AndroidView(factory = { GameView(it, previewEngine, interactive = false) }, modifier = Modifier.fillMaxSize()) }
+        if (!androidx.compose.ui.platform.LocalInspectionMode.current) key(level) {
+            AndroidView(factory = { GameView(it, previewEngine, interactive = false, skin = skin) },
+                update = { it.setSkin(skin) }, modifier = Modifier.fillMaxSize())
+        }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background.copy(alpha = .85f)))))
         Surface(Modifier.align(Alignment.TopStart).padding(16.dp), shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.background.copy(alpha = .8f)) {
             Text(stringResource(R.string.level_index, level.ordinal + 1), Modifier.padding(horizontal = 12.dp, vertical = 7.dp), color = MaterialTheme.colorScheme.onSurface, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -131,19 +148,23 @@ private fun HomeScreenPreview() { SprintTheme { HomeScreen(HomeState(), {}) } }
 
 @Composable
 private fun LevelSelector(selected: LevelId, onSelect: (LevelId) -> Unit) {
-    Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        LevelId.entries.forEach { level ->
-            val active = selected == level
-            val accent = level.accentColor()
-            Surface(Modifier.weight(1f).clip(RoundedCornerShape(18.dp))
-                .selectable(active, role = Role.RadioButton, onClick = { onSelect(level) }).testTag("level-" + (level.ordinal + 1)),
-                color = if (active) accent.copy(alpha = .13f) else MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(18.dp), border = BorderStroke(1.dp, if (active) accent else MaterialTheme.colorScheme.outline)) {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 13.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text(stringResource(R.string.level_index, level.ordinal + 1), color = accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(level.shortTitleRes), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Text(stringResource(level.difficultyRes), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Eyebrow(stringResource(R.string.choose_world))
+        Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LevelTheme.entries.forEach { theme ->
+                val level = LevelId.entries.first { it.theme == theme && it.difficulty == selected.difficulty }
+                FilterChip(selected = selected.theme == theme, onClick = { onSelect(level) },
+                    label = { Text(stringResource(theme.titleRes), fontSize = 13.sp) },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("world-${theme.name}"))
+            }
+        }
+        Eyebrow(stringResource(R.string.choose_difficulty))
+        Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Difficulty.entries.forEach { difficulty ->
+                val level = LevelId.entries.first { it.theme == selected.theme && it.difficulty == difficulty }
+                FilterChip(selected = selected == level, onClick = { onSelect(level) },
+                    label = { Text(stringResource(difficulty.titleRes), fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("level-${level.ordinal + 1}"))
             }
         }
     }

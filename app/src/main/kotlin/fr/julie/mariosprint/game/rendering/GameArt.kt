@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import fr.julie.mariosprint.domain.game.Tile
 import fr.julie.mariosprint.domain.game.BonusType
 import fr.julie.mariosprint.domain.game.LevelTheme
+import fr.julie.mariosprint.domain.model.CharacterSkin
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -21,7 +22,10 @@ internal object GameArt {
     val tiles = Tile.entries.filter { it != Tile.AIR }.associateWith(::createTile)
     val soil = createSoil(false)
     val grass = createSoil(true)
-    val heroFrames = List(4, ::createHero)
+    val characters = CharacterSkin.entries.associateWith { skin ->
+        if (skin == CharacterSkin.LUIGI) List(4, ::createHero) else CharacterArt.frames(skin)
+    }
+    val heroFrames = characters.getValue(CharacterSkin.LUIGI)
     val enemy = createEnemy()
     val mushroom = createMushroom()
     val coin = createCoin()
@@ -92,13 +96,13 @@ internal object GameArt {
         round(canvas, 16f + leftFoot, 67f + lift, 25f + leftFoot, 69f + lift, 1f, 0x70ffd49c)
         round(canvas, 36f + rightFoot, 67f + lift, 46f + rightFoot, 69f + lift, 1f, 0x70ffd49c)
         // Bras et gants blancs contrastés pour rester lisibles sur petit écran.
-        gradient(canvas, 11f, 36f, 25f, 56f, 6f, 0xffff6558.toInt(), 0xffc72f35.toInt())
-        gradient(canvas, 40f, 35f, 52f, 53f, 6f, 0xffff6b59.toInt(), 0xffce3439.toInt())
+        gradient(canvas, 11f, 36f, 25f, 56f, 6f, 0xff69cf76.toInt(), 0xff218b54.toInt())
+        gradient(canvas, 40f, 35f, 52f, 53f, 6f, 0xff80da78.toInt(), 0xff239352.toInt())
         oval(canvas, 7f, 48f - leftFoot, 24f, 62f - leftFoot, 0xffe2e7f2.toInt())
         oval(canvas, 9f, 48f - leftFoot, 23f, 58f - leftFoot, Color.WHITE)
         oval(canvas, 43f, 46f + leftFoot, 58f, 60f + leftFoot, 0xffe2e7f2.toInt())
         oval(canvas, 44f, 46f + leftFoot, 57f, 56f + leftFoot, Color.WHITE)
-        gradient(canvas, 21f, 33f, 46f, 61f, 9f, 0xffff6251.toInt(), 0xffd93737.toInt())
+        gradient(canvas, 21f, 33f, 46f, 61f, 9f, 0xff66c968.toInt(), 0xff289551.toInt())
         round(canvas, 22f, 43f, 46f, 64f, 6f, 0xff3379d4.toInt())
         round(canvas, 23f, 35f, 28f, 51f, 2f, 0xff3e88e4.toInt())
         round(canvas, 39f, 35f, 44f, 51f, 2f, 0xff3e88e4.toInt())
@@ -123,17 +127,17 @@ internal object GameArt {
         oval(canvas, 43f, 29f, 51f, 36f, 0xff59372e.toInt())
         oval(canvas, 45f, 23f, 59f, 32f, 0xffefaa87.toInt())
         oval(canvas, 45f, 22f, 58f, 29f, 0xffffd2aa.toInt())
-        // Casquette avec badge M.
+        // Luigi : casquette verte et badge L.
         path.reset(); path.moveTo(17f, 16f); path.cubicTo(13f, -1f, 39f, -4f, 48f, 6f)
         path.quadTo(52f, 10f, 51f, 17f); path.close()
-        paint.shader = LinearGradient(20f, 0f, 44f, 20f, 0xffff655b.toInt(), 0xffd82c36.toInt(), Shader.TileMode.CLAMP)
+        paint.shader = LinearGradient(20f, 0f, 44f, 20f, 0xff80db78.toInt(), 0xff238b51.toInt(), Shader.TileMode.CLAMP)
         canvas.drawPath(path, paint); paint.shader = null
-        oval(canvas, 34f, 12f, 61f, 19f, 0xffb72d35.toInt())
-        oval(canvas, 34f, 11f, 61f, 16f, 0xfff8554a.toInt())
+        oval(canvas, 34f, 12f, 61f, 19f, 0xff1e7849.toInt())
+        oval(canvas, 34f, 11f, 61f, 16f, 0xff5dc865.toInt())
         oval(canvas, 26f, 2f, 39f, 14f, 0xfffff4df.toInt())
-        paint.color = 0xffdf3940.toInt(); paint.textAlign = Paint.Align.CENTER
+        paint.color = 0xff258c50.toInt(); paint.textAlign = Paint.Align.CENTER
         paint.typeface = Typeface.create("sans-serif-black", Typeface.BOLD); paint.textSize = 9f
-        canvas.drawText("M", 32.5f, 11.5f, paint)
+        canvas.drawText("L", 32.5f, 11.5f, paint)
     }
 
     private fun createEnemy() = bitmap(18, 18) { canvas ->

@@ -10,7 +10,8 @@ interface RecordsRepository {
     fun observeSound(): Flow<Boolean>
     suspend fun toggleSound()
     suspend fun startAttempt(levelId: String = Level.ID)
-    suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String = result?.levelId ?: Level.ID)
+    suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String = result?.levelId ?: Level.ID,
+        awardMissions: Boolean = true)
     suspend fun pending(uid: String): RunResult?
     suspend fun acknowledge(uid: String, sent: RunResult)
 }

@@ -35,6 +35,13 @@ try {
         assert.equal((await query('select * from public.game_levels')).rows.length, 3);
         assert.ok((await query("select relrowsecurity from pg_class where oid in ('public.game_levels'::regclass, 'public.best_runs'::regclass)")).rows.every(row => row.relrowsecurity));
     });
+    const expansion = await readFile(new URL('../migrations/202611180001_courses_missions_and_skins.sql', import.meta.url), 'utf8');
+    await test('extension additive : neuf parcours et une difficulté par univers', async () => {
+        await database.exec(expansion); await database.exec(expansion);
+        assert.equal((await query('select * from public.game_levels')).rows.length, 9);
+        assert.equal((await query('select distinct theme, difficulty from public.game_levels')).rows.length, 9);
+        assert.equal((await query('select version from public.game_levels where id = $1', [meadow])).rows[0].version, 2);
+    });
     await test('anon ne peut appeler aucune RPC', async () => {
         await login(null, 'google', 'anon');
         await denied('select * from public.get_leaderboard($1)', [meadow]);
@@ -122,6 +129,78 @@ try {
     await test('suppression de compte : cascade limitée à ses records', async () => {
         await admin(); await query('delete from auth.users where id = $1', [alice]);
         assert.equal((await query('select * from public.best_runs where user_id = $1', [alice])).rows.length, 0);
+        assert.equal((await query('select * from public.best_runs where user_id = $1', [bob])).rows.length, 1);
+    });
+    const collector = '00000000-0000-0000-0000-000000000077';
+    const progress = async () => (await query('select public.get_player_progress() as value')).rows[0].value;
+    const equip = async skin => (await query('select public.equip_skin($1) as value', [skin])).rows[0].value;
+    await test('progression : les nouvelles RPC refusent anon, les UID absents et les autres fournisseurs', async () => {
+        await admin(); await query("insert into auth.users values ($1, '{}'::jsonb)", [collector]);
+        for (const [uid, provider, role] of [[collector, 'google', 'anon'], [null, 'google', 'authenticated'], [collector, 'email', 'authenticated'], ['00000000-0000-0000-0000-999999999999', 'google', 'authenticated']]) {
+            await login(uid, provider, role);
+            await denied('select public.get_player_progress()');
+            await denied("select public.equip_skin('luigi')");
+        }
+    });
+    await test('apparence : RLS active, aucun accès direct même pour son propre compte', async () => {
+        await admin();
+        assert.equal((await query("select relrowsecurity from pg_class where oid = 'public.player_appearance'::regclass")).rows[0].relrowsecurity, true);
+        await login(collector);
+        await denied('select * from public.player_appearance');
+        await denied('insert into public.player_appearance (user_id, skin_id) values ($1, $2)', [collector, 'peach']);
+        await denied("update public.player_appearance set skin_id = 'peach'");
+        await denied('delete from public.player_appearance');
+    });
+    await test('nouveau joueur : Luigi et aucune mission déjà accomplie', async () => {
+        const value = await progress();
+        assert.deepEqual(value.completed_levels, []); assert.equal(value.equipped_skin, 'luigi');
+        assert.equal((await equip('luigi')).equipped_skin, 'luigi');
+    });
+    await test('un personnage verrouillé, inconnu ou nul est refusé', async () => {
+        for (const skin of ['toad', 'yoshi', 'peach']) await denied('select public.equip_skin($1)', [skin]);
+        for (const skin of ['mario', 'service_role', null]) await denied('select public.equip_skin($1)', [skin], '22023');
+    });
+    await test('premier drapeau : un record valide débloque Toad', async () => {
+        await submit(meadow, 2, 50000);
+        assert.equal((await equip('toad')).equipped_skin, 'toad');
+        assert.deepEqual((await progress()).completed_levels, [meadow]);
+    });
+    await test('trois parcours de prairie ne suffisent pas pour Yoshi ou Peach', async () => {
+        await submit('prairie-trails-v1', 1, 51000);
+        await submit('prairie-summits-v1', 1, 52000);
+        await denied("select public.equip_skin('yoshi')"); await denied("select public.equip_skin('peach')");
+    });
+    await test('les trois univers, même en facile, débloquent Yoshi', async () => {
+        await submit('canyon-oasis-v1', 1, 48000); await submit('night-lanterns-v1', 1, 47000);
+        assert.equal((await equip('yoshi')).equipped_skin, 'yoshi');
+        await denied("select public.equip_skin('peach')");
+    });
+    await test('trois parcours Expert distincts débloquent Peach', async () => {
+        await submit('canyon-ridges-v1', 1, 53000); await denied("select public.equip_skin('peach')");
+        await submit(night, 1, 54000);
+        assert.equal((await equip('peach')).equipped_skin, 'peach');
+    });
+    await test('les récompenses et le personnage restent séparés entre comptes', async () => {
+        await login(bob); assert.equal((await progress()).equipped_skin, 'luigi');
+        assert.deepEqual((await progress()).completed_levels, [meadow]);
+        await denied("select public.equip_skin('peach')");
+        await login(collector); assert.equal((await progress()).equipped_skin, 'peach');
+    });
+    await test('tous les nouveaux niveaux acceptent leurs propres records et versions', async () => {
+        await admin(); const levels = (await query('select id, version from public.game_levels')).rows;
+        await login(collector);
+        for (const level of levels) await submit(level.id, level.version, 49000);
+        assert.equal((await progress()).completed_levels.length, 9);
+    });
+    await test('rejouer les migrations conserve les records et le personnage équipé', async () => {
+        await admin(); await database.exec(migration); await database.exec(expansion); await login(collector);
+        assert.equal((await progress()).completed_levels.length, 9);
+        assert.equal((await progress()).equipped_skin, 'peach');
+    });
+    await test('suppression du compte : cascade sur son apparence et ses records uniquement', async () => {
+        await admin(); await query('delete from auth.users where id = $1', [collector]);
+        assert.equal((await query('select * from public.player_appearance where user_id = $1', [collector])).rows.length, 0);
+        assert.equal((await query('select * from public.best_runs where user_id = $1', [collector])).rows.length, 0);
         assert.equal((await query('select * from public.best_runs where user_id = $1', [bob])).rows.length, 1);
     });
     console.log(passed + ' tests SQL réussis sur Postgres local en mémoire.');

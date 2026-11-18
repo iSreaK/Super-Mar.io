@@ -70,9 +70,14 @@ internal fun ProfileCard(profile: ProfileState, onAccountAction: (AccountAction)
             if (profile.player == null) {
                 GoogleSignInButton(profile) { onAccountAction(AccountAction.SignIn) }
                 if (!profile.configured) Text(stringResource(R.string.supabase_unconfigured_hint), color = MaterialTheme.colorScheme.tertiary, fontSize = 10.sp)
-            } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                TextButton(onClick = { onAccountAction(AccountAction.Synchronize) }) { Text(stringResource(R.string.sync), color = MaterialTheme.colorScheme.secondary) }
-                TextButton(onClick = { onAccountAction(AccountAction.SignOut) }, enabled = !profile.busy) { Text(stringResource(R.string.sign_out), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            } else {
+                Text(stringResource(R.string.sync_explanation), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 18.sp)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = { onAccountAction(AccountAction.Synchronize) }, enabled = !profile.syncing && !profile.busy) {
+                        Text(stringResource(if (profile.syncing) R.string.sync_in_progress else R.string.sync))
+                    }
+                    TextButton(onClick = { onAccountAction(AccountAction.SignOut) }, enabled = !profile.busy) { Text(stringResource(R.string.sign_out), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
             }
         }
     }

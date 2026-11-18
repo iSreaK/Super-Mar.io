@@ -30,8 +30,8 @@ android {
         applicationId = "fr.julie.mariosprint"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.4.0"
         testInstrumentationRunner = "fr.julie.mariosprint.SprintTestRunner"
         buildConfigField("boolean", "SUPABASE_CONFIGURED", configured.toString())
         buildConfigField("String", "SUPABASE_URL", quoted(supabaseUrl))

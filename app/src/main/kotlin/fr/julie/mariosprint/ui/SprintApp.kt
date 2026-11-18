@@ -33,7 +33,7 @@ fun SprintApp() {
     val app = LocalContext.current.applicationContext as SprintApplication
     val container = remember(app) { app.container }
     val accountVm: AccountViewModel = viewModel(factory = remember(container) {
-        factory { AccountViewModel(container.accounts, container.records, container.sync) }
+        factory { AccountViewModel(container.accounts, container.records, container.sync, container.progress) }
     })
     val profile by accountVm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -81,8 +81,18 @@ fun SprintApp() {
                             is HomeAction.SelectLevel -> vm.selectLevel(action.level)
                             HomeAction.Play -> navigation.navigate(Destination.Game(state.selectedLevel.value))
                             HomeAction.Leaderboard -> navigation.navigate(Destination.Leaderboard(state.selectedLevel.value))
+                            HomeAction.Collection -> navigation.navigate(Destination.Collection)
                             is HomeAction.Account -> accountVm.onAction(action.action)
                         }
+                    }
+                }
+                composable<Destination.Collection> {
+                    val vm: CollectionViewModel = viewModel(factory = remember(container) {
+                        factory { CollectionViewModel(container.accounts, container.progress, container.sync) }
+                    })
+                    val state by vm.state.collectAsStateWithLifecycle()
+                    CollectionScreen(state) { action ->
+                        if (action == CollectionAction.Back) navigation.popBackStack() else vm.onAction(action)
                     }
                 }
                 composable<Destination.Leaderboard> { entry ->
@@ -126,9 +136,9 @@ fun SprintApp() {
                         }
                     }) {
                         key(state.sessionId) {
-                            AndroidView(factory = { GameView(it, vm.engine, soundEnabled = { sound.value },
+                            AndroidView(factory = { GameView(it, vm.engine, soundEnabled = { sound.value }, skin = profile.skin,
                                 onUpdate = { vm.onAction(GameAction.Frame) }) },
-                                update = { it.refreshFrameScheduling(state.phase) }, modifier = Modifier.fillMaxSize())
+                                update = { it.setSkin(profile.skin); it.refreshFrameScheduling(state.phase) }, modifier = Modifier.fillMaxSize())
                         }
                     }
                 }

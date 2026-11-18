@@ -5,12 +5,19 @@ import kotlin.math.floor
 enum class Tile { AIR, GROUND, BRICK, QUESTION_COIN, QUESTION_MUSHROOM, USED, PIPE, PIPE_TOP, STONE }
 data class Coin(var x: Float, var y: Float, var collected: Boolean = false)
 enum class LevelTheme { MEADOW, CANYON, NIGHT }
+enum class Difficulty { EASY, NORMAL, EXPERT }
 enum class BonusType { STAR, SHIELD, MAGNET }
 data class Bonus(val type: BonusType, val x: Float, val y: Float, var collected: Boolean = false)
-enum class LevelId(val value: String, val version: Int, val theme: LevelTheme) {
-    MEADOW("prairie-1-v2", 2, LevelTheme.MEADOW),
-    CANYON("canyon-2-v1", 1, LevelTheme.CANYON),
-    NIGHT("night-3-v1", 1, LevelTheme.NIGHT);
+enum class LevelId(val value: String, val version: Int, val theme: LevelTheme, val difficulty: Difficulty) {
+    MEADOW("prairie-1-v2", 2, LevelTheme.MEADOW, Difficulty.EASY),
+    CANYON("canyon-2-v1", 1, LevelTheme.CANYON, Difficulty.NORMAL),
+    NIGHT("night-3-v1", 1, LevelTheme.NIGHT, Difficulty.EXPERT),
+    MEADOW_TRAILS("prairie-trails-v1", 1, LevelTheme.MEADOW, Difficulty.NORMAL),
+    MEADOW_SUMMITS("prairie-summits-v1", 1, LevelTheme.MEADOW, Difficulty.EXPERT),
+    CANYON_OASIS("canyon-oasis-v1", 1, LevelTheme.CANYON, Difficulty.EASY),
+    CANYON_RIDGES("canyon-ridges-v1", 1, LevelTheme.CANYON, Difficulty.EXPERT),
+    NIGHT_LANTERNS("night-lanterns-v1", 1, LevelTheme.NIGHT, Difficulty.EASY),
+    NIGHT_OBSERVATORY("night-observatory-v1", 1, LevelTheme.NIGHT, Difficulty.NORMAL);
     companion object {
         fun from(value: String) = entries.firstOrNull { it.value == value } ?: MEADOW
         val rankedIds = entries.map { it.value }
@@ -52,7 +59,11 @@ class Level private constructor(
             Bonus(BonusType.SHIELD, shield * SIZE, 12 * SIZE),
             Bonus(BonusType.MAGNET, magnet * SIZE, 12 * SIZE),
         )
-        fun create(id: LevelId): Level = if (id == LevelId.MEADOW) prairie() else adventure(id)
+        fun create(id: LevelId): Level = when (id) {
+            LevelId.MEADOW -> prairie()
+            LevelId.CANYON, LevelId.NIGHT -> adventure(id)
+            else -> AdditionalCourses.create(id).let { Level(id, it.tiles, it.coins, it.enemies, it.bonuses) }
+        }
 
         /** Deux tracés distincts : petites terrasses du canyon et plateformes nocturnes. */
         private fun adventure(id: LevelId): Level {

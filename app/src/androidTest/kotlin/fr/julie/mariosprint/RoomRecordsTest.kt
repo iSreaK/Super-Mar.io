@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import fr.julie.mariosprint.data.local.*
 import fr.julie.mariosprint.data.local.model.RankingEntity
 import fr.julie.mariosprint.data.repository.RoomRecordsRepository
+import fr.julie.mariosprint.data.mapping.progressOwner
 import fr.julie.mariosprint.domain.game.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -26,6 +27,15 @@ class RoomRecordsTest {
         local = RoomRecordsRepository(database, LegacyRecordsMigration(context, database))
     }
     @After fun cleanup() { database.close(); base.deleteSharedPreferences("room-test-prairie-v1") }
+    @Test fun missionsAreAtomicWithValidFinishesAndIsolatedByOwner() = runBlocking {
+        local.finishAttempt(2, RunResult(42000, 2, true), "alice")
+        local.finishAttempt(3, RunResult(43000, 3, true, LevelId.CANYON.value), null)
+        local.finishAttempt(2, RunResult(44000, 2, false, LevelId.NIGHT.value), "alice")
+        local.finishAttempt(1, RunResult(45000, 1, true, LevelId.NIGHT.value), "bob", awardMissions = false)
+        assertEquals(listOf(Level.ID), database.progressDao().completed(progressOwner("alice")).map { it.levelId })
+        assertEquals(listOf(LevelId.CANYON.value), database.progressDao().completed(progressOwner(null)).map { it.levelId })
+        assertTrue(database.progressDao().completed(progressOwner("bob")).isEmpty())
+    }
     @Test fun legacyImportPreservesAllDataAndRunsOnlyOnce() = runBlocking {
         context.getSharedPreferences("prairie-v1", 0).edit().putLong("bestMs", 29829).putInt("attempts", 7)
             .putInt("finishes", 1).putInt("coins", 38).putBoolean("sound", false)

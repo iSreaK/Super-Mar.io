@@ -14,6 +14,7 @@ sealed interface HomeAction {
     data class SelectLevel(val level: fr.julie.mariosprint.domain.game.LevelId) : HomeAction { }
     data object Play : HomeAction
     data object Leaderboard : HomeAction
+    data object Collection : HomeAction
     data class Account(val action: AccountAction) : HomeAction
 }
 sealed interface LeaderboardAction {
@@ -34,4 +35,10 @@ sealed interface AccountEvent {
     data object RequestGoogleSignIn : AccountEvent
     data object ClearGoogleSession : AccountEvent
     data class ShowMessage(val text: UiText) : AccountEvent
+}
+
+sealed interface CollectionAction {
+    data object Back : CollectionAction
+    data object Synchronize : CollectionAction
+    data class Equip(val skin: fr.julie.mariosprint.domain.model.CharacterSkin) : CollectionAction
 }

@@ -15,6 +15,7 @@ import fr.julie.mariosprint.game.input.ControlLayout
 import fr.julie.mariosprint.game.input.TouchControls
 import fr.julie.mariosprint.game.rendering.ControlsRenderer
 import fr.julie.mariosprint.game.rendering.GameSceneRenderer
+import fr.julie.mariosprint.domain.model.CharacterSkin
 
 /** Adaptateur Android : horloge, entrées et rendu. Les règles du jeu restent dans GameEngine. */
 @SuppressLint("ViewConstructor")
@@ -23,9 +24,10 @@ class GameView(
     val engine: GameEngine,
     private val interactive: Boolean = true,
     private val soundEnabled: () -> Boolean = { true },
+    skin: CharacterSkin = CharacterSkin.LUIGI,
     private val onUpdate: () -> Unit = {},
 ) : View(context), Choreographer.FrameCallback {
-    private val sceneRenderer = GameSceneRenderer()
+    private val sceneRenderer = GameSceneRenderer().apply { setSkin(skin) }
     private val controlsRenderer = ControlsRenderer(context.getString(R.string.control_jump), context.getString(R.string.control_run),
         context.getString(R.string.control_move), context.getString(R.string.control_jump_hint))
     private val input = GameInput()
@@ -99,6 +101,7 @@ class GameView(
         invalidate(); refreshFrameScheduling(); return true
     }
     override fun performClick(): Boolean { super.performClick(); return true }
+    fun setSkin(skin: CharacterSkin) { if (sceneRenderer.setSkin(skin)) invalidate() }
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean = handleKey(keyCode, true) || super.onKeyDown(keyCode, event)
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = handleKey(keyCode, false) || super.onKeyUp(keyCode, event)
     private fun handleKey(code: Int, pressed: Boolean): Boolean {

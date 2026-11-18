@@ -5,7 +5,9 @@ import fr.julie.mariosprint.data.local.LegacyRecordsMigration
 import fr.julie.mariosprint.data.local.SprintDatabase
 import fr.julie.mariosprint.data.local.model.*
 import fr.julie.mariosprint.data.mapping.toDomain
+import fr.julie.mariosprint.data.mapping.progressOwner
 import fr.julie.mariosprint.domain.game.LevelId
+import fr.julie.mariosprint.domain.game.Level
 import fr.julie.mariosprint.domain.game.RunResult
 import fr.julie.mariosprint.domain.model.PersonalStats
 import fr.julie.mariosprint.domain.repository.RecordsRepository
@@ -30,7 +32,7 @@ internal class RoomRecordsRepository(private val database: SprintDatabase,
         migration.initialize()
         database.withTransaction { val old = dao.stats(levelId) ?: StatsEntity(levelId); dao.saveStats(old.copy(attempts = old.attempts + 1)) }
     }
-    override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String) {
+    override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String, awardMissions: Boolean) {
         require(result == null || result.levelId == levelId)
         require(coins >= 0)
         migration.initialize()
@@ -41,6 +43,9 @@ internal class RoomRecordsRepository(private val database: SprintDatabase,
             if (result?.eligible == true && uid != null) {
                 val previous = dao.pending(levelId, uid)
                 if (previous == null || result.timeMs < previous.timeMs) dao.savePending(PendingRecordEntity(levelId, uid, result.timeMs, result.coins))
+            }
+            if (awardMissions && result?.eligible == true && result.levelId in LevelId.rankedIds && result.timeMs in 10_000..Level.MAX_TIME_MS) {
+                database.progressDao().insertCompleted(listOf(CompletedLevelEntity(progressOwner(uid), result.levelId)))
             }
         }
     }

@@ -29,6 +29,11 @@ internal class GoogleTokenRequest(@SerialName("id_token") val idToken: String, v
     @SerialName("p_time_ms") val timeMs: Long, @SerialName("p_coins") val coins: Int)
 @Serializable internal data class RankingRemote(val uid: String,
     @SerialName("display_name") val displayName: String, @SerialName("time_ms") val timeMs: Long, val coins: Int)
+@Serializable internal data class ProgressRemote(
+    @SerialName("completed_levels") val completedLevels: List<String>,
+    @SerialName("equipped_skin") val equippedSkin: String,
+)
+@Serializable internal data class SkinRequest(@SerialName("p_skin_id") val skinId: String)
 
 internal interface SupabaseApi {
     @POST("auth/v1/token?grant_type=id_token") suspend fun signIn(@Body request: GoogleTokenRequest): AuthSession
@@ -37,6 +42,9 @@ internal interface SupabaseApi {
     @POST("rest/v1/rpc/get_leaderboard") suspend fun leaderboard(@Header("Authorization") authorization: String,
         @Body request: LevelRequest): List<RankingRemote>
     @POST("rest/v1/rpc/submit_run") suspend fun submit(@Header("Authorization") authorization: String, @Body request: RunRequest)
+    @GET("rest/v1/rpc/get_player_progress") suspend fun progress(@Header("Authorization") authorization: String): ProgressRemote
+    @POST("rest/v1/rpc/equip_skin") suspend fun equip(@Header("Authorization") authorization: String,
+        @Body request: SkinRequest): ProgressRemote
 }
 internal object SupabaseClient {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }

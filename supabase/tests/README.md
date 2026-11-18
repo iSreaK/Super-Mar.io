@@ -7,7 +7,7 @@ Depuis ce dossier, avec Node et npm :
     npm ci --ignore-scripts --no-audit --no-fund
     npm test
 
-Le script charge exactement la migration de production, la rejoue et teste 18 scénarios : Google/UID, droits directs refusés, RLS, temps bornés, records par joueur/niveau, amélioration atomique, égalités, limite 50, conservation à la migration et suppression en cascade. La base est fermée à la fin, même en cas d'échec.
+Le script charge les deux migrations de production et les rejoue. Les 31 scénarios couvrent Google/UID, droits directs refusés, RLS, temps bornés, records par joueur/niveau, amélioration atomique, égalités, limite 50, les neuf parcours, les missions, le choix de skin, les récompenses verrouillées, l'isolation des comptes, la conservation à la migration et la suppression en cascade. La base est fermée à la fin, même en cas d'échec.
 
 Sur le PC de Julie, la dépendance de validation est dans C:/Android/Caches/MarioSprintSqlCheck, hors OneDrive. Pour la réutiliser :
 

@@ -5,6 +5,7 @@ import fr.julie.mariosprint.data.remote.*
 import fr.julie.mariosprint.data.repository.SupabaseAccountRepository
 import fr.julie.mariosprint.domain.game.*
 import fr.julie.mariosprint.domain.model.PlayerAccount
+import fr.julie.mariosprint.domain.model.CharacterSkin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.json.*
@@ -33,6 +34,33 @@ class SupabaseTest {
         AuthUser("alice", buildJsonObject { put("full_name", "Alice") }))
     private fun enqueueSession(token: String = "access-one") { server.enqueue(response(SupabaseClient.json.encodeToString(session(token)))) }
     private fun request() = checkNotNull(server.takeRequest(2, TimeUnit.SECONDS))
+    @Test fun progressRequestUsesOnlyTheAuthenticatedIdentity() = runBlocking {
+        store.value = session()
+        server.enqueue(response("""{"completed_levels":["prairie-1-v2"],"equipped_skin":"toad"}"""))
+        val value = SupabaseProgressSource(api, accounts).load("alice")
+        val request = request()
+        assertEquals("/rest/v1/rpc/get_player_progress", request.path)
+        assertEquals("Bearer access-one", request.getHeader("Authorization"))
+        assertEquals("toad", value.equippedSkin)
+        assertEquals(listOf(Level.ID), value.completedLevels)
+        assertEquals(0L, request.body.size)
+    }
+    @Test fun equippingASkinNeverAcceptsAClientSuppliedUidOrUnlockCounter() = runBlocking {
+        store.value = session()
+        server.enqueue(response("""{"completed_levels":["prairie-1-v2"],"equipped_skin":"toad"}"""))
+        SupabaseProgressSource(api, accounts).equip("alice", CharacterSkin.TOAD)
+        val request = request()
+        assertEquals("/rest/v1/rpc/equip_skin", request.path)
+        val body = SupabaseClient.json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertEquals(setOf("p_skin_id"), body.keys)
+        assertEquals("toad", body["p_skin_id"]?.jsonPrimitive?.content)
+    }
+    @Test fun anotherAccountCannotReadTheCurrentPlayersProgress() = runBlocking {
+        store.value = session()
+        try { SupabaseProgressSource(api, accounts).load("bob"); fail("Wrong account accepted") }
+        catch (_: IllegalStateException) { }
+        assertEquals(0, server.requestCount)
+    }
     @Test fun googleIdTokenExchangeUsesRawNonceAndPublishableKey() = runBlocking {
         enqueueSession(); accounts.signIn("google-jwt", "raw-nonce")
         val request = request(); val json = SupabaseClient.json.parseToJsonElement(request.body.readUtf8()).jsonObject

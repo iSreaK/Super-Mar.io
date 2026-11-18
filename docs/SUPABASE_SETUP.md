@@ -1,4 +1,4 @@
-# Configurer Supabase et Google — Mario Sprint 1.3
+# Configurer Supabase et Google — Mario Sprint 1.4
 
 Le jeu local fonctionne immédiatement sans compte. Le réseau devient actif une fois ces étapes terminées et l'APK recompilé. Les tests HTTP automatisés utilisent un serveur simulé sur le PC ; la connexion Google et les classements du projet distant doivent aussi être vérifiés manuellement par Julie après configuration.
 
@@ -15,16 +15,25 @@ Ce sont les identifiants publics attendus par le client. Ne pas utiliser de clé
 
 ## 2. Créer les niveaux et protéger les records
 
-Dans **SQL Editor → New query**, coller tout le fichier **supabase/migrations/202610150001_levels_and_rankings.sql**, puis **Run**. Ce script est transactionnel et peut être rejoué sans effacer les records.
+Pour un nouveau projet, dans **SQL Editor → New query**, coller tout le fichier **supabase/migrations/202610150001_levels_and_rankings.sql**, puis **Run**. Exécuter ensuite de la même façon **supabase/migrations/202611180001_courses_missions_and_skins.sql**. Les deux scripts sont transactionnels et rejouables sans effacer les records.
 
-Il crée les trois niveaux versionnés, la table best_runs, son index de classement, la RLS et deux fonctions :
+**Si la version 1.3 est déjà configurée**, exécuter seulement le second fichier : **202611180001_courses_missions_and_skins.sql**. Aucun identifiant Google ou clé n'est à recréer.
+
+La migration initiale crée les trois niveaux historiques, la table best_runs, son index de classement, la RLS et deux fonctions :
 
 - submit_run : identité issue de la session Google, bornes validées, meilleur temps atomique par niveau/UID ; un temps égal ou moins bon ne remplace rien.
 - get_leaderboard : au maximum 50 résultats, tri par temps puis UID pour départager les égalités.
 
+L'extension ajoute six parcours (neuf au total, trois univers × trois difficultés), les métadonnées des niveaux, la table player_appearance et deux RPC :
+
+- get_player_progress : retourne uniquement les niveaux terminés du compte courant et son personnage équipé. Les missions sont déduites de ses records en ligne.
+- equip_skin : vérifie la mission avant de sauvegarder le personnage pour auth.uid(). Luigi est toujours disponible ; Toad demande un premier niveau, Yoshi les trois univers, Peach les trois parcours Expert.
+
+Les écritures directes dans player_appearance sont interdites, avec RLS activée. Aucun UID ni compteur de missions n'est accepté depuis le client. Les personnages sont cosmétiques ; les temps restent calculés par l'application, avec la même limite contre un client modifié qu'en version 1.3.
+
 Les rôles anon/authenticated ne peuvent pas lire ou modifier directement les tables. Seul authenticated peut appeler les deux fonctions, qui vérifient aussi le fournisseur Google. Le nom affiché est nettoyé et limité à 40 caractères ; aucun email, jeton ou photo n'est ajouté aux classements.
 
-Lancer ensuite **supabase/checks.sql**, qui ne fait que lire la structure. Vérifier les trois niveaux actifs, relrowsecurity=true, toutes les permissions directes à false, EXECUTE=false pour anon et true pour authenticated. Les deux fonctions doivent afficher prosecdef=true et search_path vide.
+Lancer ensuite **supabase/checks.sql**, qui ne fait que lire la structure. Vérifier les neuf niveaux actifs, relrowsecurity=true, toutes les permissions directes à false, EXECUTE=false pour anon et true pour authenticated. Les quatre fonctions doivent afficher prosecdef=true et search_path vide.
 
 ## 3. Préparer Google Cloud
 
@@ -68,7 +77,7 @@ Copier **supabase.properties.example** en **supabase.properties**, à la racine 
     SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
     GOOGLE_WEB_CLIENT_ID=CLIENT_WEB.apps.googleusercontent.com
 
-Copier l'ID client Web en entier, y compris le tiret après le numéro de projet et le suffixe .apps.googleusercontent.com. Ne pas entourer les valeurs de guillemets. Ce fichier est ignoré par Git. Le build refuse les clés secrètes et les URL hors HTTPS Supabase. Sans configuration complète, les trois niveaux et les scores locaux fonctionnent ; le bouton Google explique ce qui manque.
+Copier l'ID client Web en entier, y compris le tiret après le numéro de projet et le suffixe .apps.googleusercontent.com. Ne pas entourer les valeurs de guillemets. Ce fichier est ignoré par Git. Le build refuse les clés secrètes et les URL hors HTTPS Supabase. Sans configuration complète, les neuf niveaux et les scores locaux fonctionnent ; le bouton Google explique ce qui manque.
 
 Aucun google-services.json n'est nécessaire. Firebase et son plugin ont été retirés. La chaîne Kotlin/AGP/Gradle/SDK initiale reste inchangée.
 
@@ -86,6 +95,8 @@ La première commande exécute uniquement les tests JVM et le lint sur le PC. La
 Ouvrir Mario Sprint sur le téléphone, toucher **Continuer avec Google**, choisir son compte Google. Sélectionner un niveau et finir une course sans pause ni passage en arrière-plan. Le résultat doit annoncer sa synchronisation. Ouvrir son classement, puis comparer avec un second compte si souhaité.
 
 Dans Supabase, **Authentication → Users** doit contenir le joueur et **Table Editor → best_runs** son record pour le bon level_id. Ces consultations administrateur ne modifient pas les permissions de l'app. Chaque niveau conserve son meilleur temps séparément.
+
+Après ce premier niveau, ouvrir **Missions & personnages** : Toad doit être débloqué. L'équiper, puis utiliser **Synchroniser mon compte**. Dans **Table Editor → player_appearance**, le compte doit afficher skin_id=toad. Terminer un niveau dans chacun des trois univers débloque Yoshi ; les trois parcours Expert débloquent Peach. Les skins ne changent ni la vitesse ni les collisions. Les records du compte permettent de retrouver les déblocages sur un autre téléphone après connexion et synchronisation. Le profil invité reste local et séparé.
 
 Une course invitée reste locale. Une connexion en cours de partie ne réattribue pas ce temps. En cas de réseau absent, l'envoi est conservé localement pour le bon UID et niveau ; toucher **Synchroniser** après retour du réseau. Aucun service ne tourne en arrière-plan. Les temps historiques prairie-1-v1 sont conservés séparément et ne sont pas réenvoyés comme s'ils appartenaient aux nouveaux parcours.
 
