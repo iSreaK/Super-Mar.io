@@ -51,6 +51,14 @@ class ViewModelTest {
         assertNotNull(vm.state.value.error)
         assertFalse(vm.state.value.busy)
     }
+    @Test fun synchronizationErrorIsNotReportedAsALockedSkin() = runTest {
+        val accounts = FakeAccounts().apply { value.value = PlayerAccount("alice", "Alice") }
+        val vm = keep(CollectionViewModel(accounts, FakeProgress(), FakeSync(IllegalArgumentException())))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(CollectionAction.Synchronize)
+        assertEquals(UiText(fr.julie.mariosprint.R.string.progress_sync_pending), vm.state.value.error)
+        assertFalse(vm.state.value.busy)
+    }
 
     @Test fun selectedLevelUsesItsOwnStatsAndKeepsLegacyBestSeparate() = runTest {
         val records = FakeRecords()
@@ -265,8 +273,15 @@ internal class FakeRecords : RecordsRepository {
     override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String, awardMissions: Boolean) {
         finishes++; lastUid = uid; lastLevel = levelId; awardedMissions = awardMissions
     }
-    override suspend fun pending(uid: String) = pending[uid]
-    override suspend fun acknowledge(uid: String, sent: RunResult) { if (pending[uid] == sent) pending.remove(uid) }
+    /** Temps supplémentaires d'un même joueur sur d'autres parcours, servis par identifiant de niveau comme le DAO. */
+    val queued = mutableListOf<Pair<String, RunResult>>()
+    override suspend fun pending(uid: String, excludedLevelIds: Set<String>) =
+        (listOfNotNull(pending[uid]) + queued.filter { it.first == uid }.map { it.second })
+            .sortedBy { it.levelId }.firstOrNull { it.levelId !in excludedLevelIds }
+    override suspend fun acknowledge(uid: String, sent: RunResult) {
+        if (pending[uid] == sent) pending.remove(uid)
+        queued.remove(uid to sent)
+    }
 }
 internal class FakeAccounts(override val configured: Boolean = true) : AccountRepository {
     val value = MutableStateFlow<PlayerAccount?>(null)
@@ -277,7 +292,9 @@ internal class FakeAccounts(override val configured: Boolean = true) : AccountRe
     override suspend fun signIn(idToken: String, nonce: String) { signIns++ }
     override suspend fun signOut() { signOuts++; onSignOut(); value.value = null }
 }
-internal class FakeSync : PlayerSyncRepository { override suspend fun synchronize() = false }
+internal class FakeSync(private val failure: Exception? = null) : PlayerSyncRepository {
+    override suspend fun synchronize(): Boolean { failure?.let { throw it }; return false }
+}
 internal class FakeProgress : ProgressRepository {
     val values = mutableMapOf<String?, MutableStateFlow<PlayerProgress>>()
     var syncs = 0

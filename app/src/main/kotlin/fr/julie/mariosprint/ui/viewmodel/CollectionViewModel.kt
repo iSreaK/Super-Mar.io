@@ -3,6 +3,7 @@ package fr.julie.mariosprint.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.julie.mariosprint.R
+import fr.julie.mariosprint.domain.model.CharacterSkin
 import fr.julie.mariosprint.domain.model.MissionId
 import fr.julie.mariosprint.domain.model.PlayerProgress
 import fr.julie.mariosprint.domain.repository.AccountRepository
@@ -42,13 +43,21 @@ internal class CollectionViewModel(
         flags.update { it.copy(busy = true, error = null) }
         viewModelScope.launch {
             try {
-                if (action is CollectionAction.Equip) progress.equip(uid, action.skin)
+                if (action is CollectionAction.Equip && !equip(uid, action.skin)) return@launch
                 if (uid != null && accounts.account.value?.uid == uid) sync.synchronize()
             } catch (_: TimeoutCancellationException) { flags.update { it.copy(error = UiText(R.string.progress_sync_pending)) }
             } catch (error: CancellationException) { throw error
-            } catch (_: IllegalArgumentException) { flags.update { it.copy(error = UiText(R.string.skin_not_unlocked)) }
             } catch (_: Exception) { flags.update { it.copy(error = UiText(R.string.progress_sync_pending)) }
             } finally { flags.update { it.copy(busy = false) } }
         }
+    }
+
+    /** Seul le refus d'équiper signale un personnage verrouillé ; une erreur de synchronisation a son propre message. */
+    private suspend fun equip(uid: String?, skin: CharacterSkin): Boolean = try {
+        progress.equip(uid, skin)
+        true
+    } catch (_: IllegalArgumentException) {
+        flags.update { it.copy(error = UiText(R.string.skin_not_unlocked)) }
+        false
     }
 }

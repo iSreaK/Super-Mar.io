@@ -100,3 +100,22 @@ Quatre nouveaux tests JVM couvrent la déconnexion terminée sans collecteur UI,
 Vérifications PC : **87 tests JVM réussis, aucun échec ni test ignoré**, dont 18 tests de ViewModels. Compilation des APK application et tests Android réussie, lint sans erreur et avec les mêmes 25 avertissements connus ; build complet en 7 min 3 s. Les tests SQL/SQLite ne sont pas relancés pour cette correction des contrats UI et de leur cycle de vie, sans changement de persistance ou de serveur.
 
 Aucune installation, interaction avec le téléphone ou écriture sur un compte réel pour cette correction. Le parcours Google/Supabase réel, le rendu/accessibilité et les performances sur appareil restent à valider avec une autorisation spécifique. Ces résultats ne constituent pas une certification exhaustive de toutes les règles.
+
+## Corrections 1.5.1 — 18 novembre 2026
+
+Quatre défauts relevés à la lecture du code sont corrigés, sans changement de physique, de parcours, de schéma Room ni de migration SQL. Aucune dépendance ajoutée. Un cinquième, la déconnexion bloquée en arrière-plan, avait reçu ici une correction équivalente ; celle du binôme, décrite dans la section précédente, a été conservée à sa place.
+
+- **Synchronisation** : un temps refusé définitivement par `submit_run` (HTTP 400, « Invalid run ») devient une `RunRejectedException` du domain. Il reste enregistré, mais la synchronisation passe aux autres parcours puis aux missions, et signale le refus à la fin. Une panne réseau ou un 5xx interrompt toujours l'envoi sans boucle de réessai.
+- **Progression distante** : la réponse Supabase utilise la même règle que le cache Room. Un parcours ou un personnage inconnu de cette version est ignoré au lieu de faire échouer toute la lecture ; il ne débloque rien. La borne de 50 parcours est conservée.
+- **Vestiaire** : seul le refus d'équiper affiche « personnage non débloqué » ; une erreur de synchronisation affiche le message d'attente.
+- **Manifeste** : `android:appCategory="game"` déclare l'app comme jeu, pour conserver le portrait sur grand écran avec le SDK cible 36.
+
+La précision du chrono reste d'une image (16,7 ms à 60 Hz) : c'est la conséquence de la mesure en temps réel demandée, non modifiée.
+
+Vérifications sur un second PC (JDK 25, chemin de profil non ASCII, options `android.overridePathCheck` et `file.encoding=COMPAT` passées en ligne de commande) : **93 tests JVM réussis sans échec ni test ignoré**, soit les 87 de la section précédente et 6 nouveaux tests de régression ; APK debug et sources des tests Android compilés ; lint sans erreur, 26 avertissements. Le nouvel avertissement signale que `appCategory` est ignoré avant l'API 26. Avant ces corrections, les 31 tests Postgres et les 4 tests SQLite ont été rejoués avec succès ; ils ne couvrent aucun fichier modifié ici.
+
+Non vérifié : le comportement du portrait sur tablette ou pliable, la réponse 400 d'un serveur Supabase réel, les tests instrumentés et tout essai sur téléphone. Aucun commit ni push n'a été fait pour cette évolution.
+
+## Écart avec le sujet « Projet en binôme — Jour 3 »
+
+Le sujet remis le 18 novembre 2026 impose des éléments absents de cette version : accueil avec les noms du binôme et un texte piloté par Remote Config, liste alimentée par une API publique (Retrofit, Room, Coil) avec en-têtes, tri ou filtre, suppression et écran de détail, use cases dans le domain, un fichier `…Contract.kt` par écran, notification FCM avec donnée personnalisée, `CLAUDE.md` contenant `@AGENTS.md` et skill android-cli. Remote Config et FCM sont des services Firebase, que la règle actuelle du projet interdit. La décision de lever cette règle et le périmètre à réaliser restent à prendre par le binôme.

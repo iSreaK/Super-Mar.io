@@ -7,12 +7,9 @@ import fr.julie.mariosprint.data.local.model.CompletedLevelEntity
 import fr.julie.mariosprint.data.mapping.progressOwner
 import fr.julie.mariosprint.data.mapping.toProgress
 import fr.julie.mariosprint.data.mapping.acceptsRemoteSelection
-import fr.julie.mariosprint.data.remote.ProgressRemote
 import fr.julie.mariosprint.data.remote.SupabaseProgressSource
-import fr.julie.mariosprint.domain.game.LevelId
 import fr.julie.mariosprint.domain.model.CharacterSkin
 import fr.julie.mariosprint.domain.model.PlayerAccount
-import fr.julie.mariosprint.domain.model.PlayerProgress
 import fr.julie.mariosprint.domain.repository.ProgressRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
@@ -45,10 +42,10 @@ internal class RoomProgressRepository(
         withTimeout(12_000) {
             val owner = progressOwner(account.uid)
             val selection = dao.appearance(owner) ?: AppearanceEntity(owner)
-            var server = remote.load(account.uid).validated()
+            var server = remote.load(account.uid).toProgress()
             val requestedSkin = CharacterSkin.find(selection.skinId)
             if (selection.pending && requestedSkin != null && requestedSkin in server.unlockedSkins) {
-                server = remote.equip(account.uid, requestedSkin).validated()
+                server = remote.equip(account.uid, requestedSkin).toProgress()
             }
             database.withTransaction {
                 dao.insertCompleted(server.completedLevels.map { CompletedLevelEntity(owner, it.value) })
@@ -59,12 +56,5 @@ internal class RoomProgressRepository(
                 }
             }
         }
-    }
-
-    private fun ProgressRemote.validated(): PlayerProgress {
-        require(completedLevels.size <= 50)
-        val completed = completedLevels.map { value -> checkNotNull(LevelId.entries.firstOrNull { it.value == value }) }.toSet()
-        val skin = checkNotNull(CharacterSkin.find(equippedSkin))
-        return PlayerProgress(completed, skin).also { require(skin in it.unlockedSkins) }
     }
 }
