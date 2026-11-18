@@ -59,7 +59,7 @@ internal fun ScreenTopBar(title: String, onBack: () -> Unit, actions: @Composabl
     Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(48.dp).testTag("home")) {
-            Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.return_home), Modifier.size(22.dp))
+            Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.return_previous_screen), Modifier.size(22.dp))
         }
         Text(title, Modifier.weight(1f).padding(horizontal = 4.dp), style = MaterialTheme.typography.titleMedium)
         actions()

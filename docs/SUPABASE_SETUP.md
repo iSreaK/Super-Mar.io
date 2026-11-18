@@ -1,6 +1,8 @@
-# Configurer Supabase et Google — Mario Sprint 1.4
+# Configurer Supabase et Google — Mario Sprint
 
 Le jeu local fonctionne immédiatement sans compte. Le réseau devient actif une fois ces étapes terminées et l'APK recompilé. Les tests HTTP automatisés utilisent un serveur simulé sur le PC ; la connexion Google et les classements du projet distant doivent aussi être vérifiés manuellement par Julie après configuration.
+
+Pour les amis et les profils de la version 1.6, compléter ces étapes avec [FRIENDS_SETUP.md](FRIENDS_SETUP.md) : troisième migration SQL, activation de Realtime privé et contrôles en lecture seule. Les identifiants Google/Supabase existants sont réutilisés.
 
 ## 1. Créer le projet Supabase
 
@@ -34,6 +36,8 @@ Les écritures directes dans player_appearance sont interdites, avec RLS activé
 Les rôles anon/authenticated ne peuvent pas lire ou modifier directement les tables. Seul authenticated peut appeler les deux fonctions, qui vérifient aussi le fournisseur Google. Le nom affiché est nettoyé et limité à 40 caractères ; aucun email, jeton ou photo n'est ajouté aux classements.
 
 Lancer ensuite **supabase/checks.sql**, qui ne fait que lire la structure. Vérifier les neuf niveaux actifs, relrowsecurity=true, toutes les permissions directes à false, EXECUTE=false pour anon et true pour authenticated. Les quatre fonctions doivent afficher prosecdef=true et search_path vide.
+
+Pour activer aussi les amis, appliquer ensuite **supabase/migrations/202611180002_friend_requests_and_profiles.sql**, puis suivre les réglages et contrôles du [guide social](FRIENDS_SETUP.md). Cette troisième migration conserve les données des deux précédentes.
 
 ## 3. Préparer Google Cloud
 

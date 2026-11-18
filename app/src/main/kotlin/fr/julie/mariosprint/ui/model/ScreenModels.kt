@@ -12,9 +12,12 @@ data class ProfileState(val player: PlayerUi? = null, val sound: Boolean = true,
     val configured: Boolean = false, val busy: Boolean = false, val syncing: Boolean = false,
     val skin: CharacterSkin = CharacterSkin.LUIGI, val unlockedSkins: Int = 1,
     val googleSessionClearPending: Boolean = false)
-data class HomeState(val selectedLevel: LevelId = LevelId.MEADOW, val legacyBestMs: Long? = null, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState(), val error: UiText? = null)
+data class HomeState(val selectedLevel: LevelId = LevelId.MEADOW, val legacyBestMs: Long? = null, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState(), val error: UiText? = null,
+    val friendRequests: Int = 0)
 data class LeaderboardState(val level: LevelId = LevelId.MEADOW, val entries: List<RankingEntryUi> = emptyList(), val loading: Boolean = false,
-    val error: UiText? = null, val cached: Boolean = true, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState())
+    val error: UiText? = null, val cached: Boolean = true, val stats: StatsUi = StatsUi(), val profile: ProfileState = ProfileState(),
+    val friendships: Map<String, fr.julie.mariosprint.domain.model.FriendshipStatus> = emptyMap(),
+    val friendActionBusy: Boolean = false, val friendError: UiText? = null)
 enum class RecordStatus { NONE, PRACTICE, LOCAL, SYNCING, SYNCED, PENDING, SAVE_FAILED }
 data class GameState(val level: LevelId = LevelId.MEADOW, val starSeconds: Int = 0, val magnetSeconds: Int = 0,
     val shield: Boolean = false, val personalBest: Boolean = false, val phase: Phase = Phase.READY, val timeMs: Long = 0, val coins: Int = 0,

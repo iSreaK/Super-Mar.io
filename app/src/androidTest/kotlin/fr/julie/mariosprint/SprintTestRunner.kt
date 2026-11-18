@@ -43,6 +43,15 @@ class QaSprintApplication : SprintApplication() {
                 override suspend fun synchronize(account: PlayerAccount) = Unit
             }
             override val sync = DefaultPlayerSyncRepository(records, accounts, ranking, progress)
+            override val friends = object : FriendsRepository {
+                override val incomingRequests = emptyFlow<IncomingFriendRequests>()
+                override fun observe(uid: String) = flowOf(FriendsSnapshot(uid))
+                override fun observeProfile(viewerUid: String, playerUid: String) = flowOf<UserProfile?>(null)
+                override suspend fun refresh(uid: String) = 0
+                override suspend fun execute(uid: String, command: FriendCommand) = Unit
+                override suspend fun refreshProfile(viewerUid: String, playerUid: String) = Unit
+                override fun liveEvents(uid: String) = emptyFlow<FriendsLiveEvent>()
+            }
             override val webClientId = ""
         }
     }

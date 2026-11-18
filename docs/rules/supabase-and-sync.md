@@ -50,6 +50,16 @@ Le cours montre Firebase ; l'utilisateur a explicitement choisi **Supabase**. Go
 - Après un changement de compte, ne pas exposer ses données au nouveau propriétaire, même temporairement pendant un chargement.
 - Toute modification de schéma, RPC ou catalogue déjà déployé passe par une nouvelle migration. Ne pas réécrire les migrations appliquées pour simplifier le développement local.
 
+### Amis et profils
+
+- Réutiliser l'identité Google/Supabase et le fournisseur de jetons commun. Les codes identifient un destinataire, sans autoriser une acceptation ; l'appelant vient toujours du JWT.
+- Conserver une paire unique et les verrous des profils dans l'ordre des UID. Une demande croisée ne devient pas une acceptation implicite ; les actions utilisent l'identifiant de relation pour ne pas modifier une nouvelle demande après suppression.
+- Garder les quotas des deux participants et les contrôles de rôle dans les RPC. Aucun accès direct aux tables sociales ni exposition d'email, jeton ou code d'un autre joueur.
+- Realtime diffuse une invalidation minimale sur `friends:<UID>`, avec autorisation privée et refus des envois clients. Les données sont relues en RPC puis enregistrées en transaction Room avant affichage et alerte.
+- Le flux réseau est froid, attaché à STARTED et à l'UID : annulation des sockets, heartbeat, renouvellement et réessais hors visibilité. Reprendre par une lecture complète à l'ouverture et à la reconnexion ; aucun polling ou service en arrière-plan.
+- Préserver le cache en cas d'erreur et proposer un réessai ; ne pas mettre les mutations sociales dans une file hors connexion. Séparer le compteur persistant des messages ponctuels, qui peuvent disparaître sans perdre les demandes.
+- Appliquer une nouvelle migration additive pour faire évoluer ce contrat. Suivre [FRIENDS_SETUP.md](../FRIENDS_SETUP.md) pour les réglages et les limites de validation ; ces adaptations Realtime ne sont pas présentées comme des API enseignées dans les slides.
+
 ## Exemples et pièges
 
 - Suivre [SUPABASE_SETUP.md](../SUPABASE_SETUP.md) pour la configuration ; ses instructions ne constituent pas une demande de modifier un compte réel automatiquement.

@@ -24,6 +24,7 @@ import fr.julie.mariosprint.ui.components.*
 import fr.julie.mariosprint.ui.formatting.formatRaceTime
 import fr.julie.mariosprint.ui.model.*
 import fr.julie.mariosprint.ui.theme.SprintTheme
+import fr.julie.mariosprint.domain.model.FriendshipStatus
 
 @Composable
 internal fun LeaderboardScreen(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
@@ -60,6 +61,7 @@ internal fun LeaderboardScreen(state: LeaderboardState, onAction: (LeaderboardAc
                 Text(stringResource(R.string.cached_ranking), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             state.error?.let { error -> item { InfoNotice(error.resolve(), color = MaterialTheme.colorScheme.tertiary) } }
+            state.friendError?.let { error -> item { InfoNotice(error.resolve(), color = MaterialTheme.colorScheme.error) } }
             when {
                 state.profile.player == null -> item {
                     RankingEmptyState(stringResource(R.string.ranking_signed_out_title), stringResource(R.string.ranking_signed_out_description)) {
@@ -75,7 +77,9 @@ internal fun LeaderboardScreen(state: LeaderboardState, onAction: (LeaderboardAc
                     RankingEmptyState(stringResource(R.string.ranking_empty_title), stringResource(R.string.ranking_empty_description))
                 }
                 else -> itemsIndexed(state.entries, key = { _, entry -> entry.uid }) { index, entry ->
-                    RankingRow(entry, index + 1, entry.uid == state.profile.player?.uid)
+                    RankingRow(entry, index + 1, entry.uid == state.profile.player?.uid, state.friendships[entry.uid],
+                        !state.friendActionBusy, { onAction(LeaderboardAction.OpenProfile(entry.uid)) },
+                        { onAction(LeaderboardAction.AddFriend(entry.uid)) })
                 }
             }
         }
@@ -83,23 +87,36 @@ internal fun LeaderboardScreen(state: LeaderboardState, onAction: (LeaderboardAc
 }
 
 @Composable
-private fun RankingRow(entry: RankingEntryUi, rank: Int, currentPlayer: Boolean) {
+private fun RankingRow(entry: RankingEntryUi, rank: Int, currentPlayer: Boolean, friendship: FriendshipStatus?,
+    canAdd: Boolean, onProfile: () -> Unit, onAdd: () -> Unit) {
     val largeText = LocalDensity.current.fontScale > 1.3f
-    Surface(shape = MaterialTheme.shapes.medium,
+    Surface(onClick = onProfile, shape = MaterialTheme.shapes.medium,
         color = if (currentPlayer) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface) {
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.ranking_position, rank), Modifier.widthIn(min = 28.dp), fontFamily = FontFamily.Monospace,
-                color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.titleSmall)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(entry.name.ifBlank { stringResource(R.string.player_default_name) }, style = MaterialTheme.typography.titleSmall,
-                    maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
-                if (currentPlayer) Text(stringResource(R.string.ranking_you), color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.labelMedium)
-                if (largeText) RankingTime(entry.timeMs)
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.ranking_position, rank), Modifier.widthIn(min = 28.dp), fontFamily = FontFamily.Monospace,
+                    color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleSmall)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(entry.name.ifBlank { stringResource(R.string.player_default_name) }, style = MaterialTheme.typography.titleSmall,
+                        maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
+                    if (currentPlayer) Text(stringResource(R.string.ranking_you), color = MaterialTheme.colorScheme.secondary,
+                        style = MaterialTheme.typography.labelMedium)
+                    if (largeText) RankingTime(entry.timeMs)
+                }
+                if (!largeText) RankingTime(entry.timeMs)
             }
-            if (!largeText) RankingTime(entry.timeMs)
+            if (!currentPlayer) {
+                if (friendship == null) TextButton(onClick = onAdd, enabled = canAdd,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("add-friend-${entry.uid}")) {
+                    Text(stringResource(R.string.friends_add))
+                } else Text(stringResource(when (friendship) {
+                    FriendshipStatus.INCOMING -> R.string.friends_status_incoming
+                    FriendshipStatus.OUTGOING -> R.string.friends_status_outgoing
+                    FriendshipStatus.FRIEND -> R.string.friends_status_friend
+                }), Modifier.padding(top = 12.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+            }
         }
     }
 }
