@@ -93,6 +93,7 @@ class GameView(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (!interactive) return false
+        if (engine.phase != Phase.READY && engine.phase != Phase.RUNNING) return true
         val wasJumpPressed = touchControls.jumpPressed
         touchControls.handle(event, layout)
         if (!wasJumpPressed && touchControls.jumpPressed) performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)

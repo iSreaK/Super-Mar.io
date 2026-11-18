@@ -1,107 +1,135 @@
 package fr.julie.mariosprint.ui.screens
 
-import fr.julie.mariosprint.R
-
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.tooling.preview.Preview
-import fr.julie.mariosprint.ui.theme.SprintTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import fr.julie.mariosprint.ui.model.*
+import fr.julie.mariosprint.R
 import fr.julie.mariosprint.ui.components.*
 import fr.julie.mariosprint.ui.formatting.formatRaceTime
+import fr.julie.mariosprint.ui.model.*
+import fr.julie.mariosprint.ui.theme.SprintTheme
 
 @Composable
 internal fun LeaderboardScreen(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 8.dp).testTag("ranking-screen"),
-        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        AppHeader(state.profile, { onAction(LeaderboardAction.Account(it)) }, showBack = true, onBack = { onAction(LeaderboardAction.Back) })
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Eyebrow(stringResource(state.level.titleRes), MaterialTheme.colorScheme.secondary)
-            Text(stringResource(R.string.ranking_title), color = MaterialTheme.colorScheme.onSurface, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
-            Text(stringResource(R.string.ranking_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-        }
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(18.dp)) {
-            Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Eyebrow(stringResource(R.string.personal_best_label))
-                    Text(formatRaceTime(state.stats.bestMs), color = MaterialTheme.colorScheme.tertiary, fontSize = 24.sp, fontFamily = FontFamily.Monospace)
-                }
-                StatusPill(stringResource(R.string.ranking_limit_label), MaterialTheme.colorScheme.tertiary)
+    MenuPage(Modifier.testTag("ranking-screen")) {
+        ScreenTopBar(stringResource(R.string.ranking_title), { onAction(LeaderboardAction.Back) }) {
+            IconButton(onClick = { onAction(LeaderboardAction.Refresh) }, enabled = state.profile.player != null && !state.loading,
+                modifier = Modifier.size(48.dp).testTag("refresh-ranking")) {
+                Icon(painterResource(R.drawable.ic_refresh), stringResource(R.string.refresh), Modifier.size(22.dp))
             }
         }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Eyebrow(stringResource(R.string.ranking_section_title))
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = { onAction(LeaderboardAction.Refresh) }, enabled = state.profile.player != null && !state.loading) { Text(stringResource(R.string.refresh)) }
-        }
-        if (state.entries.isNotEmpty() && state.error != null) {
-            Text(state.error.resolve(), color = MaterialTheme.colorScheme.tertiary, fontSize = 12.sp)
-        }
-        if (state.entries.isNotEmpty() && state.cached) Eyebrow(stringResource(R.string.cached_ranking))
-        Surface(Modifier.weight(1f).fillMaxWidth(), color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(22.dp)) {
-            when {
-                state.profile.player == null -> Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-                    RankingEmptyState(stringResource(R.string.ranking_signed_out_title), stringResource(R.string.ranking_signed_out_description))
-                    Spacer(Modifier.height(20.dp)); GoogleSignInButton(state.profile) { onAction(LeaderboardAction.Account(AccountAction.SignIn)) }
-                }
-                state.loading && state.entries.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                }
-                state.error != null && state.entries.isEmpty() -> Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.Center) {
-                    Text(state.error?.resolve().orEmpty(), color = MaterialTheme.colorScheme.onSurface)
-                    TextButton(onClick = { onAction(LeaderboardAction.Refresh) }) { Text(stringResource(R.string.retry)) }
-                }
-                state.entries.isEmpty() -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    RankingEmptyState(stringResource(R.string.ranking_empty_title), stringResource(R.string.ranking_empty_description))
-                }
-                else -> LazyColumn(Modifier.fillMaxSize().padding(8.dp)) {
-                    itemsIndexed(state.entries, key = { _, entry -> entry.uid }) { index, entry ->
-                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                            .background(if (entry.uid == state.profile.player?.uid) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent)
-                            .padding(horizontal = 12.dp, vertical = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text((index + 1).toString().padStart(2, '0'), color = if (index < 3) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontFamily = FontFamily.Monospace, fontSize = 13.sp, modifier = Modifier.width(32.dp))
-                            Text(if (entry.uid == state.profile.player?.uid) stringResource(R.string.current_player_name, entry.name.ifBlank { stringResource(R.string.player_default_name) }) else entry.name.ifBlank { stringResource(R.string.player_default_name) }, color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 13.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                            Spacer(Modifier.width(6.dp))
-                            Text(formatRaceTime(entry.timeMs), color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Monospace,
-                                fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        }
+        LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+                    Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Eyebrow(stringResource(R.string.level_context, stringResource(state.level.theme.titleRes), stringResource(state.level.difficultyRes)), state.level.accentColor())
+                        Text(stringResource(state.level.titleRes), style = MaterialTheme.typography.titleLarge)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                        Text(stringResource(R.string.personal_best_label), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        RaceTime(state.stats.bestMs, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.tertiary)
                     }
                 }
             }
+            item {
+                Spacer(Modifier.height(8.dp))
+                SectionHeading(stringResource(R.string.ranking_limit_label), stringResource(R.string.ranking_subtitle))
+            }
+            if (state.loading) item {
+                val description = stringResource(R.string.ranking_loading)
+                LinearProgressIndicator(Modifier.fillMaxWidth().semantics { contentDescription = description })
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (state.entries.isNotEmpty() && state.cached) item {
+                Text(stringResource(R.string.cached_ranking), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            state.error?.let { error -> item { InfoNotice(error.resolve(), color = MaterialTheme.colorScheme.tertiary) } }
+            when {
+                state.profile.player == null -> item {
+                    RankingEmptyState(stringResource(R.string.ranking_signed_out_title), stringResource(R.string.ranking_signed_out_description)) {
+                        GoogleSignInButton(state.profile) { onAction(LeaderboardAction.Account(AccountAction.SignIn)) }
+                        if (!state.profile.configured) Text(stringResource(R.string.supabase_unconfigured_hint),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, textAlign = TextAlign.Center)
+                    }
+                }
+                state.error != null && state.entries.isEmpty() -> item {
+                    SecondaryAction(stringResource(R.string.retry), { onAction(LeaderboardAction.Refresh) }, enabled = !state.loading)
+                }
+                !state.loading && state.entries.isEmpty() -> item {
+                    RankingEmptyState(stringResource(R.string.ranking_empty_title), stringResource(R.string.ranking_empty_description))
+                }
+                else -> itemsIndexed(state.entries, key = { _, entry -> entry.uid }) { index, entry ->
+                    RankingRow(entry, index + 1, entry.uid == state.profile.player?.uid)
+                }
+            }
         }
-        Spacer(Modifier.height(4.dp))
     }
 }
 
 @Composable
-private fun RankingEmptyState(title: String, description: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("01", color = MaterialTheme.colorScheme.primary, fontSize = 58.sp, fontWeight = FontWeight.Black)
-        Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 20.sp, textAlign = TextAlign.Center)
-        Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, lineHeight = 20.sp, textAlign = TextAlign.Center)
+private fun RankingRow(entry: RankingEntryUi, rank: Int, currentPlayer: Boolean) {
+    val largeText = LocalDensity.current.fontScale > 1.3f
+    Surface(shape = MaterialTheme.shapes.medium,
+        color = if (currentPlayer) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.ranking_position, rank), Modifier.widthIn(min = 28.dp), fontFamily = FontFamily.Monospace,
+                color = if (rank <= 3) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleSmall)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(entry.name.ifBlank { stringResource(R.string.player_default_name) }, style = MaterialTheme.typography.titleSmall,
+                    maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
+                if (currentPlayer) Text(stringResource(R.string.ranking_you), color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.labelMedium)
+                if (largeText) RankingTime(entry.timeMs)
+            }
+            if (!largeText) RankingTime(entry.timeMs)
+        }
     }
 }
 
-@Preview(showBackground = true)
+@Composable
+private fun RankingTime(timeMs: Long) {
+    Text(formatRaceTime(timeMs), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+}
+
+@Composable
+private fun RankingEmptyState(title: String, description: String, action: @Composable () -> Unit = {}) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Icon(painterResource(R.drawable.ic_flag), null, Modifier.size(36.dp), tint = MaterialTheme.colorScheme.secondary)
+            Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+            Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center)
+            action()
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
 private fun LeaderboardScreenPreview() { SprintTheme { LeaderboardScreen(LeaderboardState(), {}) } }
+
+@Preview(showBackground = true, widthDp = 320, heightDp = 640, fontScale = 1.5f)
+@Composable
+private fun LeaderboardEntriesPreview() {
+    SprintTheme { LeaderboardScreen(LeaderboardState(profile = ProfileState(player = PlayerUi("preview", "Julie")),
+        entries = listOf(RankingEntryUi("preview", "Julie", 42_300), RankingEntryUi("second", "Un autre joueur", 45_200))), {}) }
+}

@@ -1,6 +1,6 @@
 # Mario Sprint
 
-Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre et classements **Supabase** par niveau. Version 1.4.0 (code 5). Ouvrir ce répertoire dans Android Studio ou VS Code.
+Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre et classements **Supabase** par niveau. Version 1.5.0 (code 6). Ouvrir ce répertoire dans Android Studio ou VS Code.
 
 ## Dépôt Git
 
@@ -9,6 +9,8 @@ Le dépôt [iSreaK/Super-Mar.io](https://github.com/iSreaK/Super-Mar.io) contien
 Le wrapper Gradle, les sources, les ressources, les tests, les schémas Room et les migrations SQL sont versionnés. Les caches, APK, logs, captures, configurations locales et clés de signature sont exclus. Les fichiers `local.properties` et `supabase.properties` doivent être renseignés sur chaque poste ; le modèle Supabase est fourni sans identifiants réels. La configuration du service Supabase reste à effectuer selon le guide ci-dessous.
 
 ## Jouer
+
+L'accueil se concentre sur le parcours : choix de l'univers et de la difficulté, aperçu, meilleur temps, puis accès au vestiaire. **Jouer** et le classement restent accessibles en bas de l'écran pendant le défilement. L'icône de profil ouvre **Mon compte** (Google, synchronisation et son) ; le point d'interrogation ouvre **Comment jouer** (commandes, bonus et règles des records). Le vestiaire présente les personnages avant leurs missions. Les menus utilisent la même palette marine, corail, menthe et or, une largeur de lecture bornée et des boutons extensibles pour les grands caractères.
 
 Choisir un univers (Prairie, Canyon ou Nuit), puis une difficulté (Facile, Normal ou Expert). Chaque combinaison possède son parcours fixe, son décor et ses records. Les trois parcours de la version 1.3 gardent leur géométrie et leur identifiant. Stick à gauche : inclinaison partielle pour marcher, complète pour courir. Grand bouton à droite : saut ; maintenir pour sauter plus haut. Les deux doigts sont indépendants. Clavier : Q/D ou flèches, Maj/X pour courir, Espace/Z pour sauter.
 
@@ -67,7 +69,7 @@ Le cours Android Cloud 2026–2027 est obligatoire pour les évolutions futures 
 
 | Dossier | Rôle |
 |---|---|
-| domain/game | Physique Kotlin pure à 120 Hz, trois plans versionnés et bonus |
+| domain/game | Physique Kotlin pure à 120 Hz, neuf plans versionnés et bonus |
 | domain/model, domain/repository | Modèles métier et interfaces injectables |
 | game | Canvas, audio, entrées multipoints, bitmaps partagés |
 | ui/navigation, ui/SprintApp.kt | Routes typées et branchement des ViewModels |

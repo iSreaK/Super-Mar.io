@@ -82,8 +82,23 @@ fun SprintApp() {
                             HomeAction.Play -> navigation.navigate(Destination.Game(state.selectedLevel.value))
                             HomeAction.Leaderboard -> navigation.navigate(Destination.Leaderboard(state.selectedLevel.value))
                             HomeAction.Collection -> navigation.navigate(Destination.Collection)
+                            HomeAction.Profile -> navigation.navigate(Destination.Profile)
+                            HomeAction.Help -> navigation.navigate(Destination.Help)
                             is HomeAction.Account -> accountVm.onAction(action.action)
                         }
+                    }
+                }
+                composable<Destination.Profile> {
+                    ProfileScreen(profile) { action ->
+                        when (action) {
+                            ProfileAction.Back -> navigation.popBackStack()
+                            is ProfileAction.Account -> accountVm.onAction(action.action)
+                        }
+                    }
+                }
+                composable<Destination.Help> {
+                    HelpScreen { action ->
+                        if (action == HelpAction.Back) navigation.popBackStack()
                     }
                 }
                 composable<Destination.Collection> {

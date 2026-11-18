@@ -15,6 +15,8 @@ sealed interface HomeAction {
     data object Play : HomeAction
     data object Leaderboard : HomeAction
     data object Collection : HomeAction
+    data object Profile : HomeAction
+    data object Help : HomeAction
     data class Account(val action: AccountAction) : HomeAction
 }
 sealed interface LeaderboardAction {
@@ -41,4 +43,13 @@ sealed interface CollectionAction {
     data object Back : CollectionAction
     data object Synchronize : CollectionAction
     data class Equip(val skin: fr.julie.mariosprint.domain.model.CharacterSkin) : CollectionAction
+}
+
+sealed interface ProfileAction {
+    data object Back : ProfileAction
+    data class Account(val action: AccountAction) : ProfileAction
+}
+
+sealed interface HelpAction {
+    data object Back : HelpAction
 }

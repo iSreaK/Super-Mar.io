@@ -38,14 +38,20 @@ class AppSmokeTest {
     }
     @Test fun homeAndLeaderboardWorkWithoutSupabase() {
         compose.onNodeWithTag("dashboard").assertExists(); capture("home")
-        compose.onNodeWithTag("leaderboard").performScrollTo().performClick()
+        compose.onNodeWithTag("open-profile").performClick()
+        compose.onNodeWithTag("profile-screen").assertExists()
+        compose.onNodeWithTag("home").performClick()
+        compose.onNodeWithTag("open-help").performClick()
+        compose.onNodeWithTag("help-screen").assertExists()
+        compose.onNodeWithTag("home").performClick()
+        compose.onNodeWithTag("leaderboard").performClick()
         compose.onNodeWithTag("ranking-screen").assertExists()
         compose.onNodeWithText("Prêt à te mesurer aux autres ?").assertExists(); capture("ranking")
         compose.onNodeWithTag("home").performClick()
         compose.onNodeWithTag("dashboard").assertExists()
     }
     @Test fun pauseRetryAndBackWorkBeforeFirstMovement() {
-        compose.onNodeWithTag("play").performScrollTo().performClick()
+        compose.onNodeWithTag("play").performClick()
         compose.onNodeWithTag("game-screen").assertExists(); capture("game")
         compose.onNodeWithTag("pause").performClick()
         compose.onNodeWithTag("resume").assertExists(); capture("pause")
@@ -56,7 +62,7 @@ class AppSmokeTest {
         compose.onNodeWithTag("dashboard").assertExists()
     }
     @Test fun twoThumbsCanRunAndJumpTogether() {
-        compose.onNodeWithTag("play").performScrollTo().performClick()
+        compose.onNodeWithTag("play").performClick()
         compose.onNodeWithTag("game-screen").assertExists()
         compose.waitUntil(5000) { var found: GameView? = null; compose.runOnUiThread { found = findGame(compose.activity.window.decorView) }; found != null }
         lateinit var game: GameView
@@ -84,7 +90,7 @@ class AppSmokeTest {
         compose.onNodeWithTag("quit").performClick()
     }
     @Test fun resumeAfterLongPauseContinuesAsPractice() {
-        compose.onNodeWithTag("play").performScrollTo().performClick()
+        compose.onNodeWithTag("play").performClick()
         compose.waitUntil(5000) { var found: GameView? = null; compose.runOnUiThread { found = findGame(compose.activity.window.decorView) }; found != null }
         compose.onNodeWithTag("pause").performClick()
         SystemClock.sleep(650)
