@@ -67,6 +67,8 @@ Chaîne conservée : **AGP 9.4.0, Kotlin 2.2.10, Gradle 9.6.0, SDK 36, Compose B
 
 Le cours Android Cloud 2026–2027 est obligatoire pour les évolutions futures : lire [AGENTS.md](AGENTS.md) et la [matrice de conformité](docs/COURSE_COMPLIANCE.md). Supabase remplace le fournisseur Firebase sur instruction explicite de Julie, en conservant les principes du cours et son approche REST/Retrofit.
 
+**AGENTS.md** conserve le périmètre, les autorisations et les décisions globales, puis [oriente vers les règles utiles selon la tâche](AGENTS.md#quelles-règles-lire). [CLAUDE.md](CLAUDE.md) contient seulement `@AGENTS.md`, selon le [mécanisme d'import de Claude Code](https://code.claude.com/docs/en/memory#import-additional-files), afin de partager les mêmes consignes. Les dix fichiers de [docs/rules](docs/rules) traitent architecture, Kotlin/build, ViewModels/état, Compose/navigation, coroutines/cycle de vie, Room, Supabase/synchronisation, jeu/performances, capacités Android et validation. Chaque règle précise son périmètre, les pages PDF du cours, ses prescriptions, les adaptations MarioSprint, des exemples et les vérifications attendues. La matrice de conformité conserve la correspondance avec les slides et l'historique des résultats.
+
 | Dossier | Rôle |
 |---|---|
 | domain/game | Physique Kotlin pure à 120 Hz, neuf plans versionnés et bonus |

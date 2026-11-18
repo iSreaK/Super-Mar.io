@@ -2,22 +2,24 @@
 
 Le cours de Jordane Serreau (UPJV/INSSET), fourni par l'utilisateur le 15 octobre 2026, constitue une exigence du projet. Les numéros ci-dessous sont les **pages du PDF** (la pagination imprimée diverge à partir du jour 1). Les exercices, liens de QCM, sondages et exemples de publication ne sont pas des demandes d'exécution. Aucune dépendance ne doit être ajoutée simplement pour cocher un chapitre.
 
-| Exigence du cours | Pages PDF | Application obligatoire au projet |
-|---|---|---|
-| Ressources limitées, libération, permissions minimales | 9–10, 61–66 | E/S hors Main, arrêt audio/rendu hors premier plan, uniquement INTERNET, aucune télémétrie ajoutée |
-| Wrapper, catalogue et Kotlin DSL | 20, 52–59 | Versions centralisées et conservées, scripts .gradle.kts |
-| Kotlin, visibilité et immutabilité | 32–50 | val par défaut, nullabilité explicite, private/internal, noms explicites |
-| Thème, ressources et listes efficaces | 70–100 | Thème Compose commun, textes/resources, formats/pluriels, LazyColumn avec clé UID |
-| Navigation Compose, packages par rôle | 116–129 | Routes typées et NavHost, retour Android, écrans séparés |
-| Règles pour les agents | 135–143 | AGENTS.md durable ; compréhension des changements et aucune clé dans Git |
-| Coroutines, Flow et cycle de vie | 158–175 | viewModelScope, annulation propagée, StateFlow privé/mutable et public/lecture seule, collecte lifecycle |
-| Repository, modèles par couche, SOLID/KISS/DRY | 176–187 | Interfaces et injection manuelle, domain Kotlin pur, mapping UI/données/entités, aucune source dans le ViewModel |
-| Room, DAO, instance unique, mapping | 188–216 | Base créée au niveau Application ; transactions, Flow, schémas exportés ; import sans perte des préférences v1 |
-| State · Action · Event et previews | 218–236 | State immuable par écran, onAction typé, Event ponctuel, Root collecte et Screen stateless, Preview sans base/Supabase |
-| Source locale de vérité pour le cloud | 252–260 | Classement téléchargé dans Room puis observé, cache borné et lié au compte, erreurs et réessai explicites |
-| Fournisseur cloud du cours | 274–290 | Supabase remplace Firebase sur instruction explicite de Julie ; Google Auth, RLS, DTO et repositories restent obligatoires. Aucun service Firebase conservé |
-| Notifications et Remote Config | 291–329 | Applicables si demandés : permission Android 13 au moment utile, service déclaré, valeurs locales par défaut et intervalle de fetch adapté. Pas d'ajout dans la version actuelle |
-| Publication, API REST et images URL | 110–115, 144–153, 237–268 | Retrofit et DTO Supabase pour Auth et RPC REST, HTTPS, erreurs et délais explicites. Coil seulement si des images URL apparaissent. Aucune publication demandée |
+Les règles d'intervention sont centralisées dans [AGENTS.md](../AGENTS.md), importé par [CLAUDE.md](../CLAUDE.md). Son [tableau d'orientation](../AGENTS.md#quelles-règles-lire) indique les fichiers de `docs/rules/` à lire selon les chemins et la nature de la tâche ; ce document conserve la correspondance avec le cours et les résultats historiques. Les règles distinguent prescriptions des slides et adaptations MarioSprint, notamment l'injection par constructeur, la conservation des migrations et Supabase. Emplacement connu du PDF source sur ce poste : `C:/Users/julie/Downloads/Android Cloud 2026-2027.pdf`.
+
+| Exigence du cours | Pages PDF | Application obligatoire au projet | Règles détaillées |
+|---|---|---|---|
+| Ressources limitées, libération, permissions minimales | 9–10, 61–66 | E/S hors Main, arrêt audio/rendu hors premier plan, uniquement INTERNET, aucune télémétrie ajoutée | [Cycle de vie](rules/coroutines-and-lifecycle.md), [jeu](rules/game-and-performance.md), [capacités Android](rules/android-capabilities.md) |
+| Wrapper, catalogue et Kotlin DSL | 20, 52–59 | Versions centralisées et conservées, scripts .gradle.kts | [Kotlin/build](rules/kotlin-and-build.md) |
+| Kotlin, visibilité et immutabilité | 32–50 | val par défaut, nullabilité explicite, private/internal, noms explicites | [Kotlin/build](rules/kotlin-and-build.md) |
+| Thème, ressources et listes efficaces | 70–100 | Thème Compose commun, textes/resources, formats/pluriels, LazyColumn avec clé UID | [Compose](rules/compose-and-navigation.md) |
+| Navigation Compose, packages par rôle | 116–129 | Routes typées et NavHost, retour Android, écrans séparés | [Compose](rules/compose-and-navigation.md), [architecture](rules/architecture.md) |
+| Règles pour les agents | 135–143 | Point d'entrée court, règles par sujet, compréhension des changements et aucune clé dans Git | [AGENTS.md](../AGENTS.md), [validation](rules/testing-and-validation.md) |
+| Coroutines, Flow et cycle de vie | 158–175 | viewModelScope, annulation propagée, StateFlow privé/mutable et public/lecture seule, collecte lifecycle | [Coroutines](rules/coroutines-and-lifecycle.md), [ViewModels](rules/viewmodels-and-state.md) |
+| Repository, modèles par couche, SOLID/KISS/DRY | 176–187 | Interfaces et injection manuelle, domain Kotlin pur, mapping UI/données/entités, aucune source dans le ViewModel | [Architecture](rules/architecture.md) |
+| Room, DAO, instance unique, mapping | 188–216 | Base créée au niveau Application ; transactions, Flow, schémas exportés ; import sans perte des préférences v1 | [Room](rules/room-and-local-data.md) |
+| State · Action · Event et previews | 218–236 | State immuable par écran, onAction typé, Event ponctuel, Root collecte et Screen stateless, Preview sans base/Supabase | [ViewModels](rules/viewmodels-and-state.md), [Compose](rules/compose-and-navigation.md) |
+| Source locale de vérité pour le cloud | 252–260 | Classement téléchargé dans Room puis observé, cache borné et lié au compte, erreurs et réessai explicites | [Room](rules/room-and-local-data.md), [synchronisation](rules/supabase-and-sync.md) |
+| Fournisseur cloud du cours | 274–290 | Supabase remplace Firebase sur instruction explicite de Julie ; Google Auth, RLS, DTO et repositories restent obligatoires. Aucun service Firebase conservé | [Supabase](rules/supabase-and-sync.md) |
+| Notifications et Remote Config | 291–329 | Applicables si demandés : permission Android 13 au moment utile, service déclaré, valeurs locales par défaut et intervalle de fetch adapté. Pas d'ajout dans la version actuelle | [Capacités Android](rules/android-capabilities.md) |
+| Publication, API REST et images URL | 110–115, 144–153, 237–268 | Retrofit et DTO Supabase pour Auth et RPC REST, HTTPS, erreurs et délais explicites. Coil seulement si des images URL apparaissent. Aucune publication demandée | [Supabase](rules/supabase-and-sync.md), [capacités Android](rules/android-capabilities.md) |
 
 ## Choix adaptés au jeu
 

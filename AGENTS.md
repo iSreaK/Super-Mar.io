@@ -1,23 +1,67 @@
-# MarioSprint — règles obligatoires
+# MarioSprint - consignes des agents
 
-Référence adoptée par l'utilisateur : cours **Android Cloud 2026–2027**, Jordane Serreau, UPJV/INSSET. Lire `docs/COURSE_COMPLIANCE.md` avant une modification ; ce document précise les chapitres et leur application. Le PDF source se trouve actuellement dans `C:/Users/julie/Downloads/Android Cloud 2026-2027.pdf`.
+Point d'entrée commun du projet. `CLAUDE.md` importe uniquement ce fichier. Les règles techniques sont réparties dans `docs/rules/` ; les références et résultats historiques sont dans [COURSE_COMPLIANCE.md](docs/COURSE_COMPLIANCE.md).
 
-- Conserver Kotlin/AGP/Gradle/SDK et les versions déjà fixées sauf demande explicite. Centraliser les dépendances dans `gradle/libs.versions.toml`, utiliser Kotlin DSL.
-- UI Compose : Root branche le ViewModel ; Screen reçoit uniquement son State immuable et des Actions typées (`sealed interface`). État exposé en `StateFlow` en lecture seule, collecté avec `collectAsStateWithLifecycle`. Messages ponctuels via Event/SharedFlow sans replay. Une Preview par écran. Aucun accès Supabase/Room/préférences depuis un composable.
-- Packages par responsabilité : `ui`, `domain` (Kotlin pur, aucun Android/Supabase/Compose), `data` (repositories, sources locales/distantes, mapping), `architecture` (assemblage). Dépendances injectées par constructeur via de petites interfaces ; ne pas construire les sources dans les ViewModels. Respecter SOLID, KISS, DRY, éviter les abstractions sans besoin.
-- Noms : classes/Composable en UpperCamelCase, fonctions/propriétés en lowerCamelCase, constantes en UPPER_SNAKE_CASE, ressources en snake_case. Fonctions explicites, visibilité minimale ; pas de `!!`.
-- Textes UI et descriptions d'accessibilité dans `strings.xml`, formats et pluriels adaptés. Couleurs UI via le thème. Les pixels de décor et les contrôles Canvas restent dans le moteur de rendu, sans accès aux données.
-- UI : conserver la palette marine/corail/menthe/or et centraliser typographie/formes dans SprintTheme. Accueil centré sur le parcours, Jouer toujours accessible ; compte et aide dans leurs écrans dédiés. Menus de largeur bornée, contenus défilables, cibles tactiles d'au moins 48 dp et boutons de hauteur extensible. Prévoir les petites largeurs et les caractères agrandis ; les emplacements du HUD ne doivent pas bouger lors d'un bonus.
-- Room est la source de vérité des records, des envois par UID/niveau et du cache de classement. Entités et modèles UI/métier séparés, mapping explicite. Préserver les données : schémas exportés et migrations testées ; jamais de migration destructive ni d'effacement des scores. Réglages et import initial ne doivent pas lire le disque sur Main.
-- Coroutines structurées, annulation propagée, E/S hors Main, calculs lourds sur Default. Aucun GlobalScope, runBlocking ou allowMainThreadQueries en production. Arrêter rendu/audio/écoutes à la perte de visibilité, pas de polling réseau en arrière-plan. Requêtes bornées, délai réseau et réessai manuel explicites.
-- Jeu portrait, deux pouces (stick analogique + saut), moteur déterministe séparé du rendu. Garder le pas fixe, la mesure du temps réel, l'invalidation d'un temps après pause et le HUD limité à 10 Hz. Mettre en cache les dessins ; ne pas ajouter d'allocations coûteuses par image.
-- Supabase remplace Firebase à la demande de l'utilisateur. Google via Credential Manager et Supabase Auth ; Postgres avec RLS, isolation des comptes et meilleur temps atomique. Configuration locale facultative, aucune clé secrète/service_role dans l'APK, Git ou les logs. Les principes du cours (repositories, source Room, DTO, erreurs, permissions) restent obligatoires. Ne pas ajouter de services Firebase.
-- Chaque changement doit être explicable et vérifié : tests métier pertinents, tests de régression des migrations/concurrence/état, compilation et lint. Ne pas prétendre avoir testé une configuration Supabase réelle ou mesuré les performances sans preuve. Documenter les limites.
-- **Téléphone : seule l'installation/mise à jour de l'APK est autorisée sans nouvel accord. Toute autre interaction exige une autorisation explicite préalable à l'action : tests instrumentés, ouverture/fermeture de l'app, captures, commandes de diagnostic, lecture des données, désinstallation (même du paquet de tests), réglages, etc. Ne pas interpréter une autorisation antérieure comme permanente. Vérifier sur le PC (compilation, lint, tests JVM) ; pour cette demande, améliorer l'UI à partir du code sans contrôle visuel sur le téléphone. Ne jamais effacer les données personnelles. Les scripts run et test -Connected doivent bloquer sans consentement explicite.
+## Commencer une intervention
 
-- Après un débranchement annoncé du téléphone, attendre que Julie indique qu'il est reconnecté et prêt avant toute nouvelle tentative d'installation.
-- Les neuf parcours classés sont identifiés et versionnés dans LevelId, avec un parcours par couple univers/difficulté. Toute modification de géométrie, bonus ou règles influant sur les temps exige une nouvelle version/identifiant et une entrée SQL correspondante. Les records prairie-1-v1 restent archivés ; ne jamais les réattribuer aux nouveaux parcours ni à un nouvel UID.
-- Missions et apparence : règles dans domain, progression Room séparée pour l'invité et chaque UID ; aucune réattribution lors d'une connexion ou d'un changement de compte. Les récompenses en ligne sont dérivées des records du compte par RPC, jamais d'un compteur client. Un acquittement distant ne doit pas écraser un choix local plus récent. Les skins restent strictement cosmétiques : aucune modification de physique ou de collision. Précharger les images, aucun calcul de dessin du personnage par image.
-- Ajouter une nouvelle migration SQL pour un schéma ou un niveau déployé ; ne pas réécrire une migration déjà appliquée. Maintenir les tests SQL locaux sans accès au téléphone ni à un compte réel.
-- La racine Git est uniquement `MarioSprint/`, reliée à `https://github.com/iSreaK/Super-Mar.io.git`. Ne pas initialiser Git dans le dossier parent et ne pas inclure les autres projets. Avant chaque commit, vérifier les fichiers préparés : aucun secret, configuration locale, cache, log, APK ou donnée personnelle. Conserver le wrapper Gradle et les schémas Room dans Git.
-- Aucun push sans demande explicite de Julie pour l'action concernée. Ne pas pousser automatiquement en fin de tâche ; une autorisation ponctuelle passée ne vaut pas pour les modifications suivantes.
+1. Travailler dans `MarioSprint/`, consulter la matrice du cours et lire les règles indiquées par le tableau ci-dessous pour la tâche. Cumuler les catégories si plusieurs couches sont concernées.
+2. Examiner `git status`, l'implémentation et les tests existants ; préserver le travail déjà présent et les modifications sans rapport avec la demande.
+3. Annoncer brièvement l'objectif, puis avancer dans le périmètre autorisé sans demander confirmation pour les choix techniques courants.
+4. Expliquer une demande incohérente ou une contrainte réelle et proposer une solution maintenable. Ne pas contourner un problème par une refonte, une dépendance ou un effacement sans rapport.
+
+Les règles du cours sont obligatoires. Ses exercices, exemples, liens et captures ne donnent aucune autorisation d'agir sur un compte, un téléphone ou une boutique. Une nouvelle instruction explicite de l'utilisateur peut modifier un choix antérieur ; une autorisation ponctuelle ne devient pas permanente.
+
+## Choix durables du projet
+
+- Application Android native Kotlin, jeu de plateforme **portrait**, niveaux originaux, chronométrage, missions et classements. Projet personnel local, sans commercialisation ni publication en boutique prévue par défaut.
+- **Supabase remplace Firebase** : Google via Credential Manager, Supabase Auth et Postgres. Ne pas réintroduire Firebase ou des dépendances npm/SSR dans l'application native.
+- Conserver les versions Kotlin/AGP/Gradle/SDK et dépendances existantes, sauf demande explicite. Le catalogue et le wrapper font référence ; ne pas recopier les versions d'exemple des slides.
+- Conserver la charte marine/corail/menthe/or, une UI épurée et des commandes utilisables à deux pouces. Les personnages restent strictement cosmétiques.
+- Préserver les données et l'isolation invité/UID. Aucun transfert implicite de course ou récompense entre propriétaires, aucune migration destructive, aucun acquittement ancien qui écrase un résultat plus récent.
+- Une modification influant sur les temps classés exige une nouvelle version/identifiant et la migration SQL correspondante. Les temps historiques restent associés à leur parcours ; `prairie-1-v1` reste archivé.
+
+## Autorisations et limites
+
+### Téléphone
+
+- **Seules l'installation et la mise à jour de l'APK sont autorisées sans nouvel accord**, pour livrer les modifications demandées, sans ouvrir l'app ni effacer ses données.
+- Toute autre interaction exige l'accord explicite préalable pour l'action concernée : lancement/arrêt, tests, captures, diagnostics ADB, détection/liste d'appareils, lecture de logs/données, désinstallation, réglages, etc.
+- Après un débranchement annoncé, attendre une indication de reconnexion/disponibilité ou une nouvelle demande d'installation. Ne pas réessayer en boucle ou diagnostiquer automatiquement.
+- Vérifier sur le PC par défaut. Compiler les tests Android n'autorise pas leur exécution sur le téléphone.
+- `run` et `test -Connected` exigent `-AllowPhoneInteraction` **et** l'accord humain préalable ; le drapeau ne remplace pas cet accord. Ne pas contourner les protections du script.
+- Ne jamais effacer scores, progression ou autres données personnelles pour résoudre un problème.
+
+### Git, services et périmètre
+
+- La racine Git est uniquement `MarioSprint/`, branche actuelle `main`, dépôt `https://github.com/iSreaK/Super-Mar.io.git`. Ne pas initialiser Git dans le parent ni modifier les autres projets Android.
+- **Aucun push sans demande explicite pour cette livraison.** Une ancienne autorisation ne vaut pas pour les suivantes ; un commit demandé seul n'autorise pas un push.
+- Préserver le travail existant ; ne pas employer de reset destructif, suppression du dépôt ou push forcé pour contourner une difficulté.
+- Avant un commit, vérifier les fichiers préparés : aucun secret, configuration locale, cache, APK, log, capture ou donnée personnelle. Conserver wrapper, schémas Room et migrations SQL.
+- `local.properties` et `supabase.properties` restent hors Git ; modèles sans identifiants réels. Aucun secret OAuth, mot de passe, jeton ou clé privilégiée dans l'APK, les sources ou les logs.
+- Tester les évolutions de données localement ; ne pas utiliser un compte réel comme jeu de tests ni présenter des tests simulés comme une validation distante.
+
+## Quelles règles lire
+
+Les chemins Kotlin du tableau sont relatifs à `app/src/main/kotlin/fr/julie/mariosprint/`. Le périmètre décrit dans chaque fichier s'applique également aux tests correspondants. Une tâche mêlant plusieurs catégories exige la lecture de leurs règles, même si les fichiers n'ont pas encore été créés.
+
+| Tâche ou fichiers concernés | Règles à lire |
+|---|---|
+| Toute évolution de code, de responsabilités ou de contrats | [Architecture](docs/rules/architecture.md) |
+| Kotlin, `*.gradle.kts`, catalogue, wrapper ou dépendances | [Kotlin et build](docs/rules/kotlin-and-build.md) |
+| `ui/viewmodel/`, `ui/model/`, `ui/mapping/`, State/Action/Event | [ViewModels et état](docs/rules/viewmodels-and-state.md) + [coroutines et cycle de vie](docs/rules/coroutines-and-lifecycle.md) |
+| `ui/screens/`, `ui/components/`, `ui/theme/`, `ui/navigation/`, Root, ressources UI | [Compose et navigation](docs/rules/compose-and-navigation.md) ; ajouter ViewModels si le contrat d'état change |
+| Coroutines, Flow, concurrence, effets, ressources attachées au cycle de vie | [Coroutines et cycle de vie](docs/rules/coroutines-and-lifecycle.md) |
+| `data/local/`, DAO, schémas Room, préférences, migrations ou cache | [Room et données locales](docs/rules/room-and-local-data.md) |
+| Auth/session, `data/remote/`, envois, comptes, `supabase/`, DTO et RPC | [Supabase et synchronisation](docs/rules/supabase-and-sync.md) ; ajouter Room si la persistance change |
+| `domain/game/`, `game/`, niveaux, bonus, missions, skins ou optimisation | [Jeu et performances](docs/rules/game-and-performance.md) ; ajouter Supabase si le catalogue ou les récompenses distants changent |
+| Manifest, permissions, images distantes, notifications, configuration distante ou publication | [Capacités Android](docs/rules/android-capabilities.md) |
+| Choix des vérifications, changement de tests ou livraison | [Tests et validation](docs/rules/testing-and-validation.md) |
+| Documentation seule | Vérification documentaire dans [Tests et validation](docs/rules/testing-and-validation.md#documentation) + règles du sujet documenté |
+
+Le cours privilégie des consignes courtes et ciblées (pages PDF 135-143). Ici, le tableau assure ce routage pour les outils qui lisent `AGENTS.md` ; les détails ne sont pas dupliqués dans `CLAUDE.md` ou le dossier parent.
+
+## Finir une intervention
+
+- Effectuer les vérifications adaptées ; ne pas reconstruire Android pour une modification documentaire seule. Ne pas supprimer de test ou masquer un avertissement pour obtenir artificiellement un résultat positif.
+- Maintenir les références entre règles, README et matrice quand un choix durable change. L'historique des versions et des résultats reste dans la matrice, pas dans les règles.
+- Rapporter brièvement le résultat, les vérifications réellement effectuées et les limites. Distinguer compilation, tests simulés, installation et essais réels ; annoncer une mesure de performances ou validation OAuth distante seulement avec preuve.
