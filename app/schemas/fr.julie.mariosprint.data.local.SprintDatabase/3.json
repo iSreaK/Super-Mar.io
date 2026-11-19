@@ -1,0 +1,425 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "8560b3c93a9e0980fb0207c89c6dfe94",
+    "entities": [
+      {
+        "tableName": "personal_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `bestMs` INTEGER, `attempts` INTEGER NOT NULL, `finishes` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bestMs",
+            "columnName": "bestMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finishes",
+            "columnName": "finishes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId"
+          ]
+        }
+      },
+      {
+        "tableName": "pending_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `uid` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`, `uid`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId",
+            "uid"
+          ]
+        }
+      },
+      {
+        "tableName": "settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `sound` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sound",
+            "columnName": "sound",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "leaderboard_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`levelId` TEXT NOT NULL, `viewerUid` TEXT NOT NULL, `uid` TEXT NOT NULL, `name` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, `coins` INTEGER NOT NULL, PRIMARY KEY(`levelId`, `viewerUid`, `uid`))",
+        "fields": [
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coins",
+            "columnName": "coins",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "levelId",
+            "viewerUid",
+            "uid"
+          ]
+        }
+      },
+      {
+        "tableName": "completed_levels",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner` TEXT NOT NULL, `levelId` TEXT NOT NULL, PRIMARY KEY(`owner`, `levelId`))",
+        "fields": [
+          {
+            "fieldPath": "owner",
+            "columnName": "owner",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "owner",
+            "levelId"
+          ]
+        }
+      },
+      {
+        "tableName": "player_appearance",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner` TEXT NOT NULL, `skinId` TEXT NOT NULL, `revision` INTEGER NOT NULL, `pending` INTEGER NOT NULL, PRIMARY KEY(`owner`))",
+        "fields": [
+          {
+            "fieldPath": "owner",
+            "columnName": "owner",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skinId",
+            "columnName": "skinId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pending",
+            "columnName": "pending",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "owner"
+          ]
+        }
+      },
+      {
+        "tableName": "friends_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`viewerUid` TEXT NOT NULL, `friendCode` TEXT NOT NULL, `revision` INTEGER NOT NULL, `refreshedAtMs` INTEGER NOT NULL, PRIMARY KEY(`viewerUid`))",
+        "fields": [
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "friendCode",
+            "columnName": "friendCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "refreshedAtMs",
+            "columnName": "refreshedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "viewerUid"
+          ]
+        }
+      },
+      {
+        "tableName": "friend_relations_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`viewerUid` TEXT NOT NULL, `peerUid` TEXT NOT NULL, `relationId` TEXT NOT NULL, `displayName` TEXT NOT NULL, `skinId` TEXT NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`viewerUid`, `peerUid`), FOREIGN KEY(`viewerUid`) REFERENCES `friends_cache`(`viewerUid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "peerUid",
+            "columnName": "peerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relationId",
+            "columnName": "relationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skinId",
+            "columnName": "skinId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "viewerUid",
+            "peerUid"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "friends_cache",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "viewerUid"
+            ],
+            "referencedColumns": [
+              "viewerUid"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "social_profiles_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`viewerUid` TEXT NOT NULL, `profileUid` TEXT NOT NULL, `displayName` TEXT NOT NULL, `skinId` TEXT NOT NULL, `friendCode` TEXT, `refreshedAtMs` INTEGER NOT NULL, PRIMARY KEY(`viewerUid`, `profileUid`))",
+        "fields": [
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileUid",
+            "columnName": "profileUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skinId",
+            "columnName": "skinId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "friendCode",
+            "columnName": "friendCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "refreshedAtMs",
+            "columnName": "refreshedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "viewerUid",
+            "profileUid"
+          ]
+        }
+      },
+      {
+        "tableName": "social_profile_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`viewerUid` TEXT NOT NULL, `profileUid` TEXT NOT NULL, `levelId` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, PRIMARY KEY(`viewerUid`, `profileUid`, `levelId`), FOREIGN KEY(`viewerUid`, `profileUid`) REFERENCES `social_profiles_cache`(`viewerUid`, `profileUid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "viewerUid",
+            "columnName": "viewerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileUid",
+            "columnName": "profileUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "levelId",
+            "columnName": "levelId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "viewerUid",
+            "profileUid",
+            "levelId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "social_profiles_cache",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "viewerUid",
+              "profileUid"
+            ],
+            "referencedColumns": [
+              "viewerUid",
+              "profileUid"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8560b3c93a9e0980fb0207c89c6dfe94')"
+    ]
+  }
+}

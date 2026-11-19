@@ -73,6 +73,18 @@ internal fun ProfileScreen(state: ProfileState, onAction: (ProfileAction) -> Uni
             }
             if (state.player == null) item { InfoNotice(stringResource(R.string.profile_guest_notice)) }
             if (state.player != null) item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SecondaryAction(stringResource(R.string.friends_title), { onAction(ProfileAction.Friends) })
+                    SecondaryAction(stringResource(R.string.friends_my_profile), { onAction(ProfileAction.PublicProfile) })
+                }
+            }
+            item {
+                TextButton(onClick = { onAction(ProfileAction.About) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("open-about")) {
+                    Text(stringResource(R.string.about_title))
+                }
+            }
+            if (state.player != null) item {
                 TextButton(onClick = { account(AccountAction.SignOut) }, enabled = !state.busy && !state.syncing,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("sign-out")) {
                     Text(stringResource(R.string.sign_out), color = MaterialTheme.colorScheme.onSurfaceVariant)

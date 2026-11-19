@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node rankings.test.mjs"
+    "test": "node rankings.test.mjs && node friends.test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.10"

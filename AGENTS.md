@@ -18,6 +18,7 @@ Les règles du cours sont obligatoires. Ses exercices, exemples, liens et captur
 - Conserver les versions Kotlin/AGP/Gradle/SDK et dépendances existantes, sauf demande explicite. Le catalogue et le wrapper font référence ; ne pas recopier les versions d'exemple des slides.
 - Conserver la charte marine/corail/menthe/or, une UI épurée et des commandes utilisables à deux pouces. Les personnages restent strictement cosmétiques.
 - Préserver les données et l'isolation invité/UID. Aucun transfert implicite de course ou récompense entre propriétaires, aucune migration destructive, aucun acquittement ancien qui écrase un résultat plus récent.
+- Les amis utilisent les UID existants, des RPC autorisées et un cache Room par compte. Realtime privé sert d'invalidation uniquement pendant la visibilité de l'application ; aucune écoute en arrière-plan ni Firebase/FCM. Voir [configuration sociale](docs/FRIENDS_SETUP.md).
 - Une modification influant sur les temps classés exige une nouvelle version/identifiant et la migration SQL correspondante. Les temps historiques restent associés à leur parcours ; `prairie-1-v1` reste archivé.
 
 ## Autorisations et limites

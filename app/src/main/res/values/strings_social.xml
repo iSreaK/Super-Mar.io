@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="return_previous_screen">Retour</string>
+    <string name="friends_title">Amis</string>
+    <string name="friends_subtitle">Retrouve tes joueurs et partage de nouveaux défis.</string>
+    <string name="friends_received">Reçues</string>
+    <string name="friends_sent">Envoyées</string>
+    <string name="friends_tab_count">%1$s · %2$d</string>
+    <string name="friends_my_code">Mon code ami</string>
+    <string name="friends_copy_code">Copier mon code ami</string>
+    <string name="friends_my_profile">Voir mon profil public</string>
+    <string name="friends_add_by_code">Inviter avec un code</string>
+    <string name="friends_code_label">Code ami</string>
+    <string name="friends_code_example">ABCD-1234-EF56</string>
+    <string name="friends_send">Envoyer une invitation</string>
+    <string name="friends_add">Ajouter en ami</string>
+    <string name="friends_accept">Accepter</string>
+    <string name="friends_decline">Refuser</string>
+    <string name="friends_cancel">Annuler la demande</string>
+    <string name="friends_remove">Retirer cet ami</string>
+    <string name="friends_remove_title">Retirer cet ami ?</string>
+    <string name="friends_remove_description">%1$s ne figurera plus dans ta liste. Vous pourrez vous envoyer une nouvelle invitation.</string>
+    <string name="friends_keep">Garder cet ami</string>
+    <string name="friends_open_profile">Voir le profil de %1$s</string>
+    <string name="friends_status_incoming">Demande reçue</string>
+    <string name="friends_status_outgoing">Invitation envoyée</string>
+    <string name="friends_status_friend">Dans tes amis</string>
+    <string name="friends_empty">Ta liste commence ici. Invite un joueur du classement ou partage ton code ami.</string>
+    <string name="friends_empty_incoming">Aucune demande reçue pour le moment.</string>
+    <string name="friends_empty_outgoing">Aucune invitation en attente.</string>
+    <string name="friends_sign_in">Connecte-toi à ton compte Google pour retrouver tes amis, tes invitations et ton code personnel.</string>
+    <string name="friends_open_account">Ouvrir mon compte</string>
+    <string name="friends_cached">Listes enregistrées sur ce téléphone. Tu peux les actualiser pour retrouver les derniers changements.</string>
+    <string name="friends_live">Demandes actualisées en direct pendant que le jeu est ouvert.</string>
+    <string name="friends_refreshing">Actualisation des amis…</string>
+    <string name="friends_network_error">Connexion impossible. Les données enregistrées sont conservées ; réessaie quand le réseau revient.</string>
+    <string name="friends_service_error">Le service amis est indisponible pour le moment. Réessaie plus tard.</string>
+    <string name="friends_invalid_code">Utilise un code ami de 12 caractères, de A à F et de 0 à 9.</string>
+    <string name="friends_player_not_found">Ce joueur est introuvable ou son profil n’est plus disponible.</string>
+    <string name="friends_self_error">Ce code ou ce profil est le tien.</string>
+    <string name="friends_action_unavailable">Cette action n’est plus disponible. Actualise les demandes.</string>
+    <string name="friends_limit_error">La limite d’amis ou de demandes a été atteinte. Réessaie plus tard.</string>
+    <string name="user_profile_title">Profil du joueur</string>
+    <string name="user_profile_self">C’est ton profil public.</string>
+    <string name="user_profile_records">Ses records en ligne</string>
+    <string name="user_profile_no_records">Aucun record publié pour le moment.</string>
+    <string name="user_profile_cached">Dernier profil enregistré sur ce téléphone</string>
+    <string name="user_profile_loading">Chargement du profil…</string>
+    <string name="user_profile_privacy">Seuls le nom public, le personnage et les records publiés sont affichés.</string>
+    <string name="about_title">À propos</string>
+    <string name="about_description">Mario Sprint est un projet Android étudiant : des parcours originaux, des défis chronométrés et des amis pour partager l’aventure.</string>
+    <string name="about_designers">Les concepteurs</string>
+    <string name="about_julien" translatable="false">Julien</string>
+    <string name="about_isreak" translatable="false">iSreaK</string>
+    <string name="about_clement" translatable="false">Clément</string>
+    <string name="about_kiss" translatable="false">KiSs</string>
+    <string name="about_project">Le projet</string>
+    <string name="about_project_details">Développé en Kotlin avec Jetpack Compose, Room et Supabase, dans le cadre du cours Android Cloud 2026–2027. Projet personnel et non commercial.</string>
+    <string name="about_version">Version %1$s</string>
+    <plurals name="friends_badge_description">
+        <item quantity="one">Amis, %d demande reçue</item>
+        <item quantity="other">Amis, %d demandes reçues</item>
+    </plurals>
+    <plurals name="friends_received_alert">
+        <item quantity="one">%d nouvelle demande d’ami</item>
+        <item quantity="other">%d nouvelles demandes d’amis</item>
+    </plurals>
+    <plurals name="user_profile_record_count">
+        <item quantity="one">%d parcours terminé en ligne</item>
+        <item quantity="other">%d parcours terminés en ligne</item>
+    </plurals>
+</resources>

@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +39,18 @@ internal fun HomeScreen(state: HomeState, onAction: (HomeAction) -> Unit) {
             onProfile = { onAction(HomeAction.Profile) }, onHelp = { onAction(HomeAction.Help) })
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            item { Text(stringResource(R.string.home_title), style = MaterialTheme.typography.headlineMedium) }
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.home_title), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                    IconButton(onClick = { onAction(HomeAction.Friends) }, modifier = Modifier.size(48.dp).testTag("open-friends")) {
+                        BadgedBox(badge = { if (state.friendRequests > 0) Badge { Text(state.friendRequests.toString()) } }) {
+                            Icon(painterResource(R.drawable.ic_friends),
+                                pluralStringResource(R.plurals.friends_badge_description, state.friendRequests, state.friendRequests),
+                                tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                }
+            }
             state.error?.let { error -> item { InfoNotice(error.resolve(), color = MaterialTheme.colorScheme.error) } }
             item { LevelSelector(state.selectedLevel) { onAction(HomeAction.SelectLevel(it)) } }
             item { LevelPreviewCard(state.selectedLevel, state.profile.skin, state.stats) }

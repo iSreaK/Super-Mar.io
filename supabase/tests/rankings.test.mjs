@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { createLocalSupabase } from './local-supabase.mjs';
 const { PGlite } = await import(process.env.PGLITE_MODULE ? pathToFileURL(process.env.PGLITE_MODULE).href : '@electric-sql/pglite');
 const database = await PGlite.create();
 let passed = 0;
@@ -20,13 +21,7 @@ const denied = (sql, params, code = '42501') => assert.rejects(() => query(sql, 
 const submit = (level, version, time, coins = 2) => query('select public.submit_run($1, $2, $3, $4)', [level, version, time, coins]);
 try {
     // Auth et rôles minimaux locaux : aucun appel à un compte ou projet Supabase réel.
-    await database.exec(
-        "create role anon; create role authenticated; create schema auth;" +
-        "create table auth.users (id uuid primary key, raw_user_meta_data jsonb);" +
-        "create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;" +
-        "create function auth.uid() returns uuid language sql stable as $$ select (auth.jwt() ->> 'sub')::uuid $$;" +
-        "grant usage on schema auth to anon, authenticated;"
-    );
+    await createLocalSupabase(database);
     await query('insert into auth.users values ($1, $3::jsonb), ($2, $4::jsonb)', [alice, bob,
         JSON.stringify({ full_name: '  Alice\n' + 'x'.repeat(60) + '  ', email: 'private@example.test' }), JSON.stringify({ full_name: 'Bob' })]);
     const migration = await readFile(new URL('../migrations/202610150001_levels_and_rankings.sql', import.meta.url), 'utf8');
@@ -42,6 +37,9 @@ try {
         assert.equal((await query('select distinct theme, difficulty from public.game_levels')).rows.length, 9);
         assert.equal((await query('select version from public.game_levels where id = $1', [meadow])).rows[0].version, 2);
     });
+    // Les garanties historiques sont aussi vérifiées avec l'extension sociale réellement installée.
+    const social = await readFile(new URL('../migrations/202611180002_friend_requests_and_profiles.sql', import.meta.url), 'utf8');
+    await database.exec(social);
     await test('anon ne peut appeler aucune RPC', async () => {
         await login(null, 'google', 'anon');
         await denied('select * from public.get_leaderboard($1)', [meadow]);

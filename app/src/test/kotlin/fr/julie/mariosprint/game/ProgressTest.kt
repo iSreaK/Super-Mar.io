@@ -40,7 +40,11 @@ class ProgressTest {
     }
     @Test fun everyRankedCourseHasTheSameVersionInSql() {
         val migrations = File("../supabase/migrations").listFiles().orEmpty().filter { it.extension == "sql" }
-        val levels = Regex("\\('([a-z0-9-]+)',\\s*([0-9]+)").findAll(migrations.joinToString("\n") { it.readText() })
+        val sql = migrations.joinToString("\n") { it.readText() }
+        val inserts = Regex("""(?is)insert\s+into\s+public[.]game_levels\s*\([^;]*?\)\s*values\s*([^;]*);""")
+            .findAll(sql).joinToString("\n") { it.groupValues[1] }
+        assertTrue("No game_levels INSERT statements found", inserts.isNotBlank())
+        val levels = Regex("\\('([a-z0-9-]+)',\\s*([0-9]+)").findAll(inserts)
             .associate { it.groupValues[1] to it.groupValues[2].toInt() }
         assertEquals(LevelId.entries.associate { it.value to it.version }, levels)
     }

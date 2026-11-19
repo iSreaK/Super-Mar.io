@@ -45,6 +45,11 @@ internal interface SupabaseApi {
     @GET("rest/v1/rpc/get_player_progress") suspend fun progress(@Header("Authorization") authorization: String): ProgressRemote
     @POST("rest/v1/rpc/equip_skin") suspend fun equip(@Header("Authorization") authorization: String,
         @Body request: SkinRequest): ProgressRemote
+    @GET("rest/v1/rpc/get_friend_snapshot") suspend fun friends(@Header("Authorization") authorization: String): FriendsSnapshotRemote
+    @POST("rest/v1/rpc/friend_action") suspend fun friendAction(@Header("Authorization") authorization: String,
+        @Body request: FriendActionRequest): FriendsSnapshotRemote
+    @POST("rest/v1/rpc/get_social_profile") suspend fun socialProfile(@Header("Authorization") authorization: String,
+        @Body request: UserProfileRequest): UserProfileRemote
 }
 internal object SupabaseClient {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }

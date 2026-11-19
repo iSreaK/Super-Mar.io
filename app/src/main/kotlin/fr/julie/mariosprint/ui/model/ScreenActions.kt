@@ -17,11 +17,14 @@ sealed interface HomeAction {
     data object Collection : HomeAction
     data object Profile : HomeAction
     data object Help : HomeAction
+    data object Friends : HomeAction
     data class Account(val action: AccountAction) : HomeAction
 }
 sealed interface LeaderboardAction {
     data object Back : LeaderboardAction
     data object Refresh : LeaderboardAction
+    data class OpenProfile(val uid: String) : LeaderboardAction
+    data class AddFriend(val uid: String) : LeaderboardAction
     data class Account(val action: AccountAction) : LeaderboardAction
 }
 sealed interface GameAction {
@@ -46,6 +49,9 @@ sealed interface CollectionAction {
 
 sealed interface ProfileAction {
     data object Back : ProfileAction
+    data object Friends : ProfileAction
+    data object PublicProfile : ProfileAction
+    data object About : ProfileAction
     data class Account(val action: AccountAction) : ProfileAction
 }
 

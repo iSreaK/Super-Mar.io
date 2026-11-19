@@ -1,6 +1,6 @@
 # Mario Sprint
 
-Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre et classements **Supabase** par niveau. Version 1.5.1 (code 7). Ouvrir ce répertoire dans Android Studio ou VS Code.
+Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre, classements et amis **Supabase**. Version 1.6.0 (code 7). Ouvrir ce répertoire dans Android Studio ou VS Code.
 
 ## Dépôt Git
 
@@ -40,7 +40,9 @@ Room conserve la progression par UID et un profil invité séparé. Une course i
 
 Suivre le [guide complet pas à pas](docs/SUPABASE_SETUP.md). Le script SQL prêt à exécuter est dans [supabase/migrations](supabase/migrations/202610150001_levels_and_rankings.sql), avec des [contrôles de permissions en lecture seule](supabase/checks.sql).
 
-**Projet Supabase déjà configuré en 1.3 :** exécuter uniquement la [nouvelle migration des niveaux, missions et personnages](supabase/migrations/202611180001_courses_missions_and_skins.sql), puis checks.sql. Elle ajoute six niveaux, les catégories, une table d'apparence et deux RPC protégées. Elle conserve les records. Pour une première installation, appliquer les deux migrations dans l'ordre chronologique. Sans cette extension, les nouveaux parcours et le vestiaire fonctionnent localement mais leur synchronisation en ligne échoue.
+**Projet Supabase déjà configuré en 1.3 :** appliquer la [migration des niveaux, missions et personnages](supabase/migrations/202611180001_courses_missions_and_skins.sql), puis checks.sql. Elle ajoute six niveaux, les catégories, une table d'apparence et deux RPC protégées, en conservant les records.
+
+**Extension 1.6 — amis et profils :** appliquer ensuite [202611180002_friend_requests_and_profiles.sql](supabase/migrations/202611180002_friend_requests_and_profiles.sql), configurer les canaux Realtime privés et lancer [friends_checks.sql](supabase/friends_checks.sql). Les étapes exactes et la vérification manuelle à deux comptes sont dans [FRIENDS_SETUP.md](docs/FRIENDS_SETUP.md). Pour une première installation, appliquer les **trois migrations** dans l'ordre chronologique. Sans la dernière, le jeu et les classements existants restent disponibles ; les fonctions sociales affichent une erreur avec réessai.
 
 Sans configuration, tout le jeu local fonctionne. Pour activer Google et le réseau, copier supabase.properties.example vers supabase.properties puis renseigner l'URL du projet, sa clé publique sb_publishable_ et le Client ID OAuth **Web**. Ne jamais inclure de clé secrète/service_role, mot de passe Postgres ou secret OAuth dans Android. Aucun google-services.json ni service Firebase n'est utilisé.
 
@@ -49,6 +51,14 @@ Room est la source de vérité des records et du cache. La session Supabase est 
 Le serveur déduit l'UID de la session Google, accepte seulement une amélioration atomique du temps et retourne au maximum 50 joueurs par niveau, triés par temps puis UID. Aucun email, jeton ou photo n'est publié. Les écritures directes sont interdites ; les fonctions RPC contrôlent leur appelant avec RLS activée sur les tables.
 
 Une course invitée reste locale. Se connecter pendant une course ne la réattribue pas au compte. Les envois échoués restent liés au niveau et à l'UID ; Synchroniser permet de réessayer. Un acquittement ne peut supprimer un meilleur résultat arrivé pendant l'envoi. Aucun polling ni service réseau en arrière-plan. Un client modifié peut falsifier son chrono : une compétition publique nécessiterait une validation du parcours côté serveur.
+
+## Amis, profils et concepteurs
+
+L'icône Amis de l'accueil affiche le nombre de demandes reçues en attente. La page regroupe les amis, demandes reçues et envoyées, ainsi que le code personnel à copier. Une invitation peut être envoyée par code ou depuis un joueur du classement. Accepter, refuser, annuler et retirer un ami passent par les RPC autorisées ; aucune action hors connexion n'est présentée comme réussie.
+
+Les profils montrent le nom public, le personnage et les records publiés des parcours actifs. Ils sont accessibles depuis les amis et le classement ; le code n'est visible que sur son propre profil. La page **À propos**, dans Mon compte, présente Julien « iSreaK » et Clément « KiSs ».
+
+Realtime signale les changements sur le canal privé du compte uniquement lorsque l'application est visible. Le client relit les demandes en RPC, les conserve dans Room par UID, puis actualise le compteur et affiche une courte alerte. L'ouverture et la reconnexion récupèrent aussi les demandes manquées. Hors visibilité, les sockets et réessais sont arrêtés : aucune notification Android, Firebase/FCM ou écoute en arrière-plan.
 
 ## Compiler et installer
 
@@ -78,7 +88,7 @@ Le cours Android Cloud 2026–2027 est obligatoire pour les évolutions futures 
 | ui/model, ui/mapping, ui/viewmodel | State/Action/Event, mapping et coordination |
 | ui/screens, ui/components, ui/theme | Écrans stateless, previews et thème commun |
 | data/local | Room, DAO, schémas, import historique et session chiffrée |
-| data/remote, data/repository | DTO/Retrofit Supabase, comptes, cache et synchronisation |
+| data/remote, data/repository | DTO/Retrofit Supabase, Realtime privé, comptes, cache et synchronisation |
 | architecture | Application et injection manuelle |
 | supabase | Migration SQL, droits et contrôles de configuration |
 
@@ -86,8 +96,12 @@ UpperCamelCase pour classes/composables, lowerCamelCase pour fonctions/propriét
 
 ## Conservation des données
 
-Le schéma Room passe de 1 à 2 par migration additive : seules les tables completed_levels et player_appearance sont créées. Les quatre tables existantes restent intactes. Aucun effacement ni migration destructive. L'import historique prairie-v1 reste atomique et idempotent. Les anciens scores prairie-1-v1 et leurs envois restent conservés, sans être transférés aux nouveaux parcours. L'ancien meilleur temps est affiché séparément sur l'accueil. Les trois identifiants prairie-1-v2, canyon-2-v1 et night-3-v1 sont conservés ; les six ajouts portent leurs propres identifiants dans LevelId. Toute modification des conditions de course impose un nouvel identifiant/version et une entrée SQL correspondante.
+Le schéma Room est en version **3**. La migration 1 → 2 crée completed_levels et player_appearance ; la migration 2 → 3 ajoute quatre tables pour les relations et les profils consultés, séparées par UID. Les six tables de version 2 restent intactes. Le cache conserve au plus 50 profils par compte ; une transaction et la révision serveur protègent les listes de relations. Aucun effacement ni migration destructive ; les trois schémas exportés sont conservés.
+
+L'import historique prairie-v1 reste atomique et idempotent. Les anciens scores prairie-1-v1 et leurs envois restent conservés, sans être transférés aux nouveaux parcours. L'ancien meilleur temps est affiché séparément sur l'accueil. Les trois identifiants prairie-1-v2, canyon-2-v1 et night-3-v1 sont conservés ; les six ajouts portent leurs propres identifiants dans LevelId. Toute modification des conditions de course impose un nouvel identifiant/version et une entrée SQL correspondante.
 
 ## Validation
 
-Les tests JVM couvrent physique, commandes, bonus, parcours complets, chronométrage, missions, comptes, concurrence de synchronisation, frontières d'architecture et contrats HTTP Supabase sur serveur simulé. Les sources des tests Android sont maintenues et compilées, sans être exécutées sur le téléphone pour cette modification. La migration Room est aussi vérifiée sur SQLite PC avec les deux schémas exportés : `python tools/test_local_migration.py`. Les tests Postgres isolés couvrent les deux migrations, les records, l'accès aux personnages et les permissions. Aucune inspection visuelle ou mesure de performances sur appareil n'est effectuée. Les résultats et limites sont consignés dans docs/COURSE_COMPLIANCE.md. La connexion Google réelle et les écritures du projet distant devront être vérifiées par Julie.
+Les tests JVM couvrent physique, bonus, parcours, missions, comptes, synchronisation et contrats HTTP/WebSocket locaux. Les cas sociaux vérifient notamment l'annulation au passage hors visibilité, les changements d'UID, les alertes après persistance, le renouvellement du JWT et la récupération après reconnexion. Les sources des tests Android sont maintenues et compilées, sans exécution pour cette modification.
+
+Les migrations Room sont vérifiées sur SQLite PC contre les schémas exportés : `python tools/test_local_migration.py`. Les [tests SQL isolés](supabase/tests/README.md) chargent les trois migrations et vérifient records, skins, relations, quotas et permissions avec Auth/Realtime simulés. Ils ne valident ni le service Realtime réel ni des transactions PostgreSQL parallèles sur plusieurs connexions. Aucune inspection visuelle ou mesure de performances sur appareil n'est effectuée. Les résultats et limites sont consignés dans [COURSE_COMPLIANCE.md](docs/COURSE_COMPLIANCE.md). OAuth, les canaux privés et les écritures authentifiées du projet distant restent à vérifier manuellement.
