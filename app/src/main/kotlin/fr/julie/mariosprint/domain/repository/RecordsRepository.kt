@@ -12,7 +12,6 @@ interface RecordsRepository {
     suspend fun startAttempt(levelId: String = Level.ID)
     suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String = result?.levelId ?: Level.ID,
         awardMissions: Boolean = true)
-    /** Prochain temps à envoyer ; les parcours exclus sont ceux déjà refusés pendant cette synchronisation. */
-    suspend fun pending(uid: String, excludedLevelIds: Set<String> = emptySet()): RunResult?
+    suspend fun pending(uid: String): RunResult?
     suspend fun acknowledge(uid: String, sent: RunResult)
 }

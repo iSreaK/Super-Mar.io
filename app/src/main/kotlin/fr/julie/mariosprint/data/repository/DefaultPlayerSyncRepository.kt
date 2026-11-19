@@ -10,26 +10,15 @@ internal class DefaultPlayerSyncRepository(private val records: RecordsRepositor
     override suspend fun synchronize(): Boolean = mutex.withLock {
         var sent = false
         val account = accounts.account.value ?: return@withLock false
-        // Un temps refusé par le serveur reste enregistré, mais ne bloque ni les autres parcours ni les missions.
-        val rejectedLevels = mutableSetOf<String>()
-        var rejection: RunRejectedException? = null
         // Relire le compte et le record après chaque acquittement : une meilleure course peut arriver pendant l'envoi.
         while (true) {
             if (accounts.account.value?.uid != account.uid) break
-            val pending = records.pending(account.uid, rejectedLevels) ?: break
-            try {
-                ranking.submit(account, pending)
-            } catch (error: RunRejectedException) {
-                rejectedLevels += pending.levelId
-                if (rejection == null) rejection = error
-                continue
-            }
+            val pending = records.pending(account.uid) ?: break
+            ranking.submit(account, pending)
             records.acknowledge(account.uid, pending)
             sent = true
         }
         if (accounts.account.value?.uid == account.uid) progress.synchronize(account)
-        // Le refus est signalé après coup : l'écran affiche qu'un envoi reste en attente.
-        rejection?.let { throw it }
         sent
     }
 }

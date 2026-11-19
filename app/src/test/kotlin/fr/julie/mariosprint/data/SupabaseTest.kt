@@ -6,7 +6,6 @@ import fr.julie.mariosprint.data.repository.SupabaseAccountRepository
 import fr.julie.mariosprint.domain.game.*
 import fr.julie.mariosprint.domain.model.PlayerAccount
 import fr.julie.mariosprint.domain.model.CharacterSkin
-import fr.julie.mariosprint.domain.repository.RunRejectedException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.json.*
@@ -137,18 +136,6 @@ class SupabaseTest {
             try { source.submit(PlayerAccount("alice", "Alice"), result); fail("Invalid run sent") } catch (_: IllegalArgumentException) { }
         }
         assertEquals(0, server.requestCount)
-    }
-    @Test fun onlyAnInvalidRunAnswerIsADefinitiveRejection() = runBlocking {
-        store.value = session()
-        val source = SupabaseRankingSource(api, accounts)
-        val result = RunResult(42000, 7, true, LevelId.NIGHT.value)
-        server.enqueue(response("""{"code":"22023","message":"Invalid run"}""", 400))
-        try { source.submit(PlayerAccount("alice", "Alice"), result); fail("Expected rejection") }
-        catch (error: RunRejectedException) { assertEquals(LevelId.NIGHT.value, error.levelId) }
-        // Une panne temporaire reste une erreur réseau ordinaire : le même envoi pourra réussir plus tard.
-        server.enqueue(response("{}", 503))
-        try { source.submit(PlayerAccount("alice", "Alice"), result); fail("Expected failure") }
-        catch (error: HttpException) { assertEquals(503, error.code()) }
     }
     @Test fun unauthorizedResponseRefreshesOnceThenRetries() = runBlocking {
         store.value = session(); server.enqueue(response("{}", 401)); enqueueSession("access-two"); server.enqueue(response("[]"))

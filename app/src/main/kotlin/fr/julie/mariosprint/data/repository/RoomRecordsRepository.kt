@@ -49,9 +49,6 @@ internal class RoomRecordsRepository(private val database: SprintDatabase,
             }
         }
     }
-    override suspend fun pending(uid: String, excludedLevelIds: Set<String>): RunResult? {
-        migration.initialize()
-        return dao.nextPending(uid, LevelId.rankedIds - excludedLevelIds)?.toDomain()
-    }
+    override suspend fun pending(uid: String): RunResult? { migration.initialize(); return dao.nextPending(uid, LevelId.rankedIds)?.toDomain() }
     override suspend fun acknowledge(uid: String, sent: RunResult) { migration.initialize(); dao.acknowledge(sent.levelId, uid, sent.timeMs) }
 }

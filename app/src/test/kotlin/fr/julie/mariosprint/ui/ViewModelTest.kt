@@ -273,15 +273,8 @@ internal class FakeRecords : RecordsRepository {
     override suspend fun finishAttempt(coins: Int, result: RunResult?, uid: String?, levelId: String, awardMissions: Boolean) {
         finishes++; lastUid = uid; lastLevel = levelId; awardedMissions = awardMissions
     }
-    /** Temps supplémentaires d'un même joueur sur d'autres parcours, servis par identifiant de niveau comme le DAO. */
-    val queued = mutableListOf<Pair<String, RunResult>>()
-    override suspend fun pending(uid: String, excludedLevelIds: Set<String>) =
-        (listOfNotNull(pending[uid]) + queued.filter { it.first == uid }.map { it.second })
-            .sortedBy { it.levelId }.firstOrNull { it.levelId !in excludedLevelIds }
-    override suspend fun acknowledge(uid: String, sent: RunResult) {
-        if (pending[uid] == sent) pending.remove(uid)
-        queued.remove(uid to sent)
-    }
+    override suspend fun pending(uid: String) = pending[uid]
+    override suspend fun acknowledge(uid: String, sent: RunResult) { if (pending[uid] == sent) pending.remove(uid) }
 }
 internal class FakeAccounts(override val configured: Boolean = true) : AccountRepository {
     val value = MutableStateFlow<PlayerAccount?>(null)
