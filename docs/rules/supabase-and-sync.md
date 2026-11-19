@@ -17,6 +17,7 @@ Le cours montre Firebase ; l'utilisateur a explicitement choisi **Supabase**. Go
 
 - Exposer des contrats métier depuis les repositories ; garder Retrofit, les détails HTTP et DTO dans les sources de données.
 - Le DTO reflète les champs JSON nécessaires, avec une conversion explicite. Ne pas réutiliser le DTO comme State UI ou entité de base pour éviter le mapping.
+- Vérifier les effets de chaque RPC avant de choisir GET ou POST. Une RPC qui crée/actualise des données, même pour préparer une lecture, doit utiliser POST ; GET est exécuté en lecture seule par PostgREST. Couvrir le mode de transaction SQL et la méthode HTTP dans les tests, sans marquer artificiellement une fonction qui écrit comme STABLE.
 - Utiliser le client natif existant, HTTPS, délais bornés et erreurs de réseau/HTTP distinctes des erreurs de sauvegarde. Aucun appel depuis un Screen ou une Preview.
 - Enregistrer les résultats dans Room, puis les observer via le repository. Conserver le cache disponible hors connexion et signaler quand il s'agit d'un résultat enregistré.
 - La configuration locale et les secrets ne sont pas versionnés. Aucun mot de passe, secret OAuth, jeton de session ou clé privilégiée dans les sources, l'APK, les erreurs ou logs HTTP.

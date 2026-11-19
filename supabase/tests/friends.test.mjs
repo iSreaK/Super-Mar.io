@@ -60,6 +60,17 @@ try {
         await denied('select public.require_social_user()');
         await denied('select public.ensure_player_profile($1)', [bob]);
     });
+    await test('snapshot avec provisionnement : transaction lecture seule refusée, lecture-écriture autorisée', async () => {
+        await login(alice);
+        await db.exec('begin read only');
+        try {
+            await denied('select public.get_friend_snapshot()', [], '25006');
+        } finally { await db.exec('rollback'); }
+        await db.exec('begin read write');
+        try {
+            assert.equal((await snapshot()).viewer_uid, alice);
+        } finally { await db.exec('rollback'); }
+    });
     await test('ajout de soi-même et cibles ambiguës ou inconnues refusés', async () => {
         await denied("select public.friend_action('send',$1)", [alice], '22023');
         await denied("select public.friend_action('send',null,null,null)", [], '22023');

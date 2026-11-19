@@ -75,6 +75,14 @@ Utiliser deux comptes Google de test choisis par l'utilisateur sur deux installa
 7. Changer de compte sur A : l'ancien code, les anciennes relations et alertes ne doivent plus être affichés au nouveau compte.
 8. Laisser l'application visible au-delà de l'expiration du JWT pour valider le renouvellement sur le vrai service, puis vérifier les logs Realtime du Dashboard sans partager de jeton.
 
+## Message « Le service amis est indisponible » en version 1.6.0
+
+Mettre à jour les deux installations vers **1.6.1**. La version 1.6.0 utilisait GET pour `get_friend_snapshot`, alors que cette RPC peut créer ou actualiser le profil. PostgREST exécute GET en transaction READ ONLY ; l'écriture interne échoue avec le code PostgreSQL `25006`. La version 1.6.1 utilise POST pour permettre la transaction READ WRITE. Voir les [modes de transaction PostgREST](https://docs.postgrest.org/en/stable/references/transactions.html).
+
+Cela explique qu'un envoi de demande en POST puisse réussir tandis que les listes et les alertes ne sont pas actualisées. Realtime déclenche une relecture de cette même RPC ; sans relecture réussie, le client ne dispose pas des nouvelles demandes à enregistrer et à signaler. Aucun SQL supplémentaire, changement de RLS, réinstallation avec effacement ou recréation de compte n'est nécessaire pour cette correction.
+
+Pour vérifier l'alerte, garder l'application du destinataire **visible**, puis envoyer une **nouvelle** demande depuis l'autre compte. Une demande déjà en cache ne déclenche pas un nouveau message à chaque ouverture. Hors visibilité, il n'y a pas de notification système : les demandes sont récupérées au retour dans le jeu.
+
 ## Portée des tests locaux
 
 Les tests SQL PGlite exécutent les migrations de production avec Auth, rôles et fonctions Realtime simulés. Ils contrôlent les droits, RLS, règles de relation, codes, quotas, profils, déclencheurs et conservation. Ils ne démarrent pas le service Realtime et ne reproduisent pas des transactions PostgreSQL parallèles sur plusieurs connexions.
