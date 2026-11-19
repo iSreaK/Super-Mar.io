@@ -51,6 +51,14 @@ class ViewModelTest {
         assertNotNull(vm.state.value.error)
         assertFalse(vm.state.value.busy)
     }
+    @Test fun synchronizationErrorIsNotReportedAsALockedSkin() = runTest {
+        val accounts = FakeAccounts().apply { value.value = PlayerAccount("alice", "Alice") }
+        val vm = keep(CollectionViewModel(accounts, FakeProgress(), FakeSync(IllegalArgumentException())))
+        backgroundScope.launch(dispatcher) { vm.state.collect() }
+        vm.onAction(CollectionAction.Synchronize)
+        assertEquals(UiText(fr.julie.mariosprint.R.string.progress_sync_pending), vm.state.value.error)
+        assertFalse(vm.state.value.busy)
+    }
 
     @Test fun selectedLevelUsesItsOwnStatsAndKeepsLegacyBestSeparate() = runTest {
         val records = FakeRecords()
@@ -277,7 +285,9 @@ internal class FakeAccounts(override val configured: Boolean = true) : AccountRe
     override suspend fun signIn(idToken: String, nonce: String) { signIns++ }
     override suspend fun signOut() { signOuts++; onSignOut(); value.value = null }
 }
-internal class FakeSync : PlayerSyncRepository { override suspend fun synchronize() = false }
+internal class FakeSync(private val failure: Exception? = null) : PlayerSyncRepository {
+    override suspend fun synchronize(): Boolean { failure?.let { throw it }; return false }
+}
 internal class FakeProgress : ProgressRepository {
     val values = mutableMapOf<String?, MutableStateFlow<PlayerProgress>>()
     var syncs = 0

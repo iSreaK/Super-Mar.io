@@ -4,6 +4,7 @@
     <uses-feature android:glEsVersion="0x00020000" android:required="false" />
     <application
         android:name=".architecture.SprintApplication"
+        android:appCategory="game"
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

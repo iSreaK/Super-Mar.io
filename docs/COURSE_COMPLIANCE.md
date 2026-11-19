@@ -150,3 +150,21 @@ Assemblage des APK application et tests Android réussi ; lint debug sans erreur
 Après indication de reconnexion, l'installation vers le nouveau téléphone connu a répondu « appareil introuvable ». L'utilisateur a précisé qu'il avait branché le Redmi ; la commande ciblée `adb -s d2627d0d install -r` a alors répondu `Success` pour la version 1.6.1, code 8. Aucune liste/détection d'appareils, ouverture, capture, lecture de données, diagnostic ou exécution de test sur téléphone pour cette correction. Le second téléphone reste à mettre à jour lorsqu'il sera disponible. Aucun commit ni push pour cette correction ; aucun changement du serveur distant.
 
 À la demande suivante de l'utilisateur, le nouveau téléphone a également été mis à jour vers 1.6.1 (code 8) : la commande ciblée `adb -s AX3C025526000830 install -r` a répondu `Success`. Les deux installations sont donc mises à jour, sans ouverture du jeu ni test sur les appareils. Aucune autre interaction avec le téléphone, aucun commit ni push pour cette livraison complémentaire.
+
+## Corrections de robustesse — 18 et 19 novembre 2026
+
+Trois défauts relevés à la lecture du code sont corrigés, sans changement de physique, de parcours, de schéma Room ni de migration SQL. Aucune dépendance ajoutée. Écrites le 18 novembre sur la base 1.5.0, elles sont fusionnées le 19 novembre avec l'évolution 1.6.0 puis la correction 1.6.1 décrites ci-dessus et ne portent pas de numéro de version propre : la version reste celle de `main`, 1.6.1 (code 8). Deux autres corrections préparées sur cette branche n'y figurent plus. Celle de la déconnexion bloquée en arrière-plan est remplacée par celle du binôme, décrite plus haut. Celle d'un temps refusé par le serveur est retirée le 19 novembre à la demande de son auteur : elle ajoutait une notion à expliquer pour un cas qui ne se produit pas dans le cadre du projet. Ce défaut reste donc présent : un envoi refusé définitivement (HTTP 400) est retenté en premier à chaque synchronisation et retarde les autres.
+
+- **Progression distante** : la réponse Supabase utilise la même règle que le cache Room. Un parcours ou un personnage inconnu de cette version est ignoré au lieu de faire échouer toute la lecture ; il ne débloque rien. La borne de 50 parcours est conservée.
+- **Vestiaire** : seul le refus d'équiper affiche « personnage non débloqué » ; une erreur de synchronisation affiche le message d'attente.
+- **Manifeste** : `android:appCategory="game"` déclare l'app comme jeu, pour conserver le portrait sur grand écran avec le SDK cible 36.
+
+La précision du chrono reste d'une image (16,7 ms à 60 Hz) : c'est la conséquence de la mesure en temps réel demandée, non modifiée.
+
+Vérifications sur un second PC (JDK 25, chemin de profil non ASCII, options `android.overridePathCheck` et `file.encoding=COMPAT` passées en ligne de commande) : après fusion avec 1.6.1, **125 tests JVM réussis sans échec ni test ignoré**, dont les 4 tests de régression de ces corrections ; APK debug et sources des tests Android compilés ; lint sans erreur, 26 avertissements. Le nouvel avertissement signale que `appCategory` est ignoré avant l'API 26. Les 10 tests SQLite de migration Room sont rejoués avec succès sur l'état fusionné. Les tests Postgres n'ont été rejoués qu'avant la fusion (31 réussis sur les deux premières migrations) : ceux de la migration des amis ne sont pas relancés ici, ces corrections ne modifiant aucun fichier SQL.
+
+Non vérifié : le comportement du portrait sur tablette ou pliable, les tests instrumentés et tout essai sur téléphone. Ces corrections sont livrées sur la branche `evo_clement`, qui n'est pas fusionnée dans `main` à cette date.
+
+## Écart avec le sujet « Projet en binôme — Jour 3 »
+
+Le sujet remis le 18 novembre 2026 impose des éléments absents de cette version : accueil avec les noms du binôme et un texte piloté par Remote Config, liste alimentée par une API publique (Retrofit, Room, Coil) avec en-têtes, tri ou filtre, suppression et écran de détail, use cases dans le domain, un fichier `…Contract.kt` par écran, notification FCM avec donnée personnalisée, `CLAUDE.md` contenant `@AGENTS.md` et skill android-cli. Remote Config et FCM sont des services Firebase, que la règle actuelle du projet interdit. La décision de lever cette règle et le périmètre à réaliser restent à prendre par le binôme.
