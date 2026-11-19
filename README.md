@@ -1,6 +1,6 @@
 # Mario Sprint
 
-Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre, classements et amis **Supabase**. Version 1.6.0 (code 7). Ouvrir ce répertoire dans Android Studio ou VS Code.
+Application Android Kotlin en portrait : **neuf parcours originaux**, trois difficultés par univers, missions, quatre personnages, commandes à deux pouces, bonus, chronomètre, classements et amis **Supabase**. Version 1.6.1 (code 8). Ouvrir ce répertoire dans Android Studio ou VS Code.
 
 ## Dépôt Git
 

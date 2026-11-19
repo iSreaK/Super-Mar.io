@@ -50,6 +50,19 @@ class FriendsDataTest {
         assertEquals(FriendshipStatus.INCOMING, repository.observe("alice").first().relations.single().status)
         assertTrue(repository.observe("bob").first().relations.isEmpty())
     }
+    @Test fun profileProvisioningUsesPostgrestsReadWriteTransaction() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = if (request.method == "GET")
+                response("""{"code":"25006","message":"cannot execute INSERT in a read-only transaction"}""", 405)
+            else response(snapshot())
+        }
+        assertEquals(1, repository.refresh("alice"))
+        val request = request()
+        assertEquals("POST", request.method)
+        assertEquals("application/json", request.getHeader("Content-Type"))
+        assertEquals(0L, request.body.size)
+        assertEquals("bob", repository.observe("alice").first().relations.single().player.uid)
+    }
     @Test fun friendCodeIsNormalizedAndNoCallerUidIsSent() = runBlocking {
         server.enqueue(response(snapshot(relationStatus = "outgoing")))
         repository.execute("alice", FriendCommand.SendByCode("abcd - ef12 - 3456"))
